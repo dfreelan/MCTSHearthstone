@@ -1,0 +1,2 @@
+# MCTSHearthstone
+behavior for Hearthstone
