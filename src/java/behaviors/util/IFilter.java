@@ -1,7 +1,8 @@
 package behaviors.util;
 
-import behaviors.simulation.SimulationContext;
 import net.demilich.metastone.game.actions.GameAction;
+
+import behaviors.simulation.SimulationContext;
 
 @FunctionalInterface
 public interface IFilter

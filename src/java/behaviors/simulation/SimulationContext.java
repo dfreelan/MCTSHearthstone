@@ -10,40 +10,56 @@ import net.demilich.metastone.game.logic.GameLogic;
 
 public class SimulationContext implements Cloneable
 {
-    private GameContext state;
+    private GameContext context;
 
-    public SimulationContext(GameContext state)
+    public SimulationContext(GameContext context)
     {
-        this.state = state;
+        this.context = context;
     }
 
     public SimulationContext(Player player1, Player player2, GameLogic logic, DeckFormat deckFormat)
     {
-        state = new GameContext(player1, player2, logic, deckFormat);
+        context = new GameContext(player1, player2, logic, deckFormat);
     }
 
     @Override
     public SimulationContext clone()
     {
-        GameContext cloneState = state.clone();
-        return new SimulationContext(cloneState);
+        return new SimulationContext(context.clone());
     }
 
-    public Player getActivePlayer() {
-        return state.getActivePlayer();
+    public boolean gameDecided()
+    {
+        return context.gameDecided();
     }
 
-    public int getActivePlayerId() {
-        return state.getActivePlayerId();
+    public Player getActivePlayer()
+    {
+        return context.getActivePlayer();
+    }
+
+    public int getActivePlayerId()
+    {
+        return context.getActivePlayerId();
+    }
+
+    public int getWinningPlayerId()
+    {
+        return context.getWinningPlayerId();
     }
 
     public List<GameAction> getValidActions()
     {
-        return state.getValidActions();
+        return context.getValidActions();
     }
 
     public void applyAction(int playerID, GameAction action)
     {
-        state.getLogic().performGameAction(state.getActivePlayerId(), action);
+        context.getLogic().performGameAction(context.getActivePlayerId(), action);
+    }
+
+    public void playFromMiddle()
+    {
+        context.playFromMiddle();
     }
 }
