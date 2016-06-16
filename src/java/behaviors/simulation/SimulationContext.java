@@ -16,19 +16,19 @@ import net.demilich.metastone.game.logic.GameLogic;
 
 public class SimulationContext implements Cloneable
 {
-    private GameContext state;
+    private GameContext context;
 
-    public SimulationContext(GameContext state)
+    public SimulationContext(GameContext context)
     {
-        state.getLogic().setLoggingEnabled(false);
-        this.state = state;
-        state.setLogic(new SimulationLogic());
+        context.getLogic().setLoggingEnabled(false);
+        this.context = context;
+        context.setLogic(new SimulationLogic());
         
-    }
+   }
 
     public SimulationContext(Player player1, Player player2, GameLogic logic, DeckFormat deckFormat)
     {
-        state = new GameContext(player1, player2, logic, deckFormat);
+        context = new GameContext(player1, player2, logic, deckFormat);
     }
 
     private void cloneEntity(GameContext state, GameContext clone, Environment e, HashMap cloneMap){
@@ -41,12 +41,12 @@ public class SimulationContext implements Cloneable
     @Override
     public SimulationContext clone()
     {
-        GameContext clone = state.clone();
+        GameContext clone = context.clone();
         HashMap cloneMap = clone.getEnvironment();
 
         //this stuff is just making sure we REALLY deep clone this for battlecries.
         //TODO: only do this stuff if the action is a battlecry (if possible?)
-        Stack<Minion> newStack = (Stack<Minion>) ((Stack<Minion>) state.getEnvironment().get(Environment.SUMMON_REFERENCE_STACK));
+        Stack<Minion> newStack = (Stack<Minion>) ((Stack<Minion>) context.getEnvironment().get(Environment.SUMMON_REFERENCE_STACK));
         if (newStack != null) {
             newStack = (Stack<Minion>) newStack.clone();
             for (int i = 0; i < newStack.size(); i++) {
@@ -54,19 +54,19 @@ public class SimulationContext implements Cloneable
             }
             cloneMap.put(Environment.SUMMON_REFERENCE_STACK, newStack);
         }
-        Card pending = (Card) state.getEnvironment().get(Environment.PENDING_CARD);
+        Card pending = (Card) context.getEnvironment().get(Environment.PENDING_CARD);
         if (pending != null) {
             pending = pending.clone();
             cloneMap.put(Environment.PENDING_CARD, pending);
         }
-        cloneEntity(state,clone,Environment.TARGET_OVERRIDE,cloneMap);
-        cloneEntity(state,clone,Environment.KILLED_MINION,cloneMap);
-        cloneEntity(state,clone,Environment.ATTACKER_REFERENCE,cloneMap);
-        cloneEntity(state,clone,Environment.EVENT_TARGET_REFERENCE_STACK,cloneMap);
-        cloneEntity(state,clone,Environment.TARGET,cloneMap);
+        cloneEntity(context,clone,Environment.TARGET_OVERRIDE,cloneMap);
+        cloneEntity(context,clone,Environment.KILLED_MINION,cloneMap);
+        cloneEntity(context,clone,Environment.ATTACKER_REFERENCE,cloneMap);
+        cloneEntity(context,clone,Environment.EVENT_TARGET_REFERENCE_STACK,cloneMap);
+        cloneEntity(context,clone,Environment.TARGET,cloneMap);
 
 
-        Minion transform = (Minion) state.getEnvironment().get(Environment.TRANSFORM_REFERENCE);
+        Minion transform = (Minion) context.getEnvironment().get(Environment.TRANSFORM_REFERENCE);
         if (transform != null) {
             transform = transform.clone();
             cloneMap.put(Environment.TRANSFORM_REFERENCE, transform);
@@ -76,21 +76,38 @@ public class SimulationContext implements Cloneable
         return new SimulationContext(clone);
     }
 
-    public Player getActivePlayer() {
-        return state.getActivePlayer();
+    public boolean gameDecided()
+    {
+        return context.gameDecided();
     }
 
-    public int getActivePlayerId() {
-        return state.getActivePlayerId();
+    public Player getActivePlayer()
+    {
+        return context.getActivePlayer();
+    }
+
+    public int getActivePlayerId()
+    {
+        return context.getActivePlayerId();
+    }
+
+    public int getWinningPlayerId()
+    {
+        return context.getWinningPlayerId();
     }
 
     public List<GameAction> getValidActions()
     {
-        return state.getValidActions();
+        return context.getValidActions();
     }
 
     public void applyAction(int playerID, GameAction action)
     {
-        state.getLogic().performGameAction(state.getActivePlayerId(), action);
+        context.getLogic().performGameAction(context.getActivePlayerId(), action);
+    }
+
+    public void playFromMiddle()
+    {
+        context.playFromMiddle();
     }
 }
