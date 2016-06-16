@@ -23,8 +23,7 @@ public class SimulationContext implements Cloneable
         context.getLogic().setLoggingEnabled(false);
         this.context = context;
         context.setLogic(new SimulationLogic());
-        
-   }
+    }
 
     public SimulationContext(Player player1, Player player2, GameLogic logic, DeckFormat deckFormat)
     {
