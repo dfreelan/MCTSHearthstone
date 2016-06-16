@@ -26,13 +26,17 @@ public class MCTSBehavior extends Behaviour {
 
     @Override
     public GameAction requestAction(GameContext gameContext, Player player, List<GameAction> list) {
-       // IntStream(int i).paralell().doSomething(runABunch(i));
+
+
+
+
         return null;
     }
 
-    public void runABunch(int index){
+    public void runABunch(int index,HashMap blah){
        // doStep();
+        //
+        //
 
-       // accumlateStast[index] = root.getValue;
     }
 }
