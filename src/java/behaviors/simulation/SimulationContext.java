@@ -8,6 +8,7 @@ import net.demilich.metastone.game.Environment;
 import net.demilich.metastone.game.GameContext;
 import net.demilich.metastone.game.Player;
 import net.demilich.metastone.game.actions.GameAction;
+import net.demilich.metastone.game.behaviour.IBehaviour;
 import net.demilich.metastone.game.cards.Card;
 import net.demilich.metastone.game.decks.DeckFormat;
 import net.demilich.metastone.game.entities.Entity;
@@ -124,6 +125,12 @@ public class SimulationContext implements Cloneable
     public int getWinningPlayerId()
     {
         return context.getWinningPlayerId();
+    }
+
+    public void setBehavior(IBehaviour behavior)
+    {
+        context.getPlayer1().setBehaviour(behavior);
+        context.getPlayer2().setBehaviour(behavior);
     }
 
     public List<GameAction> getValidActions()

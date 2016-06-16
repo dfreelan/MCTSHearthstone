@@ -8,13 +8,11 @@ import behaviors.util.ActionValuePair;
 
 public class MCTSTree
 {
-    IBehaviour rolloutBehavior;
     double exploreFactor;
     MCTSNode root;
 
-    public MCTSTree(IBehaviour rolloutBehavior, double exploreFactor, MCTSNode root)
+    public MCTSTree(double exploreFactor, MCTSNode root)
     {
-        this.rolloutBehavior = rolloutBehavior;
         this.exploreFactor = exploreFactor;
         this.root = root;
     }
@@ -26,4 +24,6 @@ public class MCTSTree
         }
         return root.getChildValues(root.getContext().getActivePlayerId());
     }
+
+    public MCTSNode getRoot() { return root; }
 }

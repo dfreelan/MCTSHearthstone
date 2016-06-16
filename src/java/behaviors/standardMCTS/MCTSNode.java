@@ -40,7 +40,7 @@ public class MCTSNode
             visited.add(cur);
         }
 
-        List<GameAction> validActions = new ArrayList<>();
+        List<GameAction> validActions = null;
         if (!cur.context.gameDecided()) {
             validActions = cur.expand((SimulationContext c, GameAction a) -> false);
         }
