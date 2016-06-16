@@ -7,14 +7,8 @@ import net.demilich.metastone.game.decks.Deck;
 /**
  * Created by dfreelan on 6/16/16.
  */
-public class SimulationDeck extends Deck {
-    public SimulationDeck(Deck baseDeck){
-        super(baseDeck.getHeroClass(),baseDeck.isArbitrary());
 
-    }
-
-}
-class SimulationCardCollection extends CardCollection{
+public class SimulationCardCollection extends CardCollection{
     private boolean shuffled = true;
     public SimulationCardCollection(CardCollection cards){
         this.addAll(cards);

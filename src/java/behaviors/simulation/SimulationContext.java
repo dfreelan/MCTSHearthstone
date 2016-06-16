@@ -22,6 +22,8 @@ public class SimulationContext implements Cloneable
     {
         state.getLogic().setLoggingEnabled(false);
         this.state = state;
+        state.setLogic(new SimulationLogic());
+        
     }
 
     public SimulationContext(Player player1, Player player2, GameLogic logic, DeckFormat deckFormat)
@@ -43,6 +45,7 @@ public class SimulationContext implements Cloneable
         HashMap cloneMap = clone.getEnvironment();
 
         //this stuff is just making sure we REALLY deep clone this for battlecries.
+        //TODO: only do this stuff if the action is a battlecry (if possible?)
         Stack<Minion> newStack = (Stack<Minion>) ((Stack<Minion>) state.getEnvironment().get(Environment.SUMMON_REFERENCE_STACK));
         if (newStack != null) {
             newStack = (Stack<Minion>) newStack.clone();
