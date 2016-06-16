@@ -23,12 +23,43 @@ public class SimulationContext implements Cloneable
         context.getLogic().setLoggingEnabled(false);
         this.context = context;
         context.setLogic(new SimulationLogic());
-    }
+        //change the decks to use deterministic versions of the decks
+        context.getPlayer1().setDeck(new SimulationCardCollection(context.getPlayer1().getDeck()));
+        context.getPlayer2().setDeck(new SimulationCardCollection(context.getPlayer2().getDeck()));
+   }
 
     public SimulationContext(Player player1, Player player2, GameLogic logic, DeckFormat deckFormat)
     {
         context = new GameContext(player1, player2, logic, deckFormat);
     }
+
+    //shuffle deck and make a random hand for my opponent
+    public void Randomize(int myId) {
+
+        //figure out who my opponent is
+        Player opponent;
+        if (myId == 0) {
+            opponent = context.getPlayer2();
+        } else {
+            opponent = context.getPlayer1();
+        }
+        //discard his entire hand into his deck
+        opponent.getDeck().addAll(opponent.getHand());
+        int handSize = opponent.getHand().getCount();
+        for (int k = 0; k < handSize; k++) {
+            Card card = opponent.getHand().get(0);
+            context.getLogic().removeCard(opponent.getId(), card);
+        }
+        //shuffle both decks
+        context.getPlayer2().getDeck().shuffle();
+        context.getPlayer1().getDeck().shuffle();
+
+        //refill opponents hand
+        for (int a = 0; a < handSize; a++) {
+            context.getLogic().receiveCard(opponent.getId(), opponent.getDeck().removeFirst());
+        }
+    }
+
 
     private void cloneEntity(GameContext state, GameContext clone, Environment e, HashMap cloneMap){
         Entity entity = (Entity) state.getEnvironment().get(e);
