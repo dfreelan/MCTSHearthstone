@@ -113,12 +113,7 @@ public class MCTSBehavior extends Behaviour
 
     private int actionHash(GameAction action)
     {
-        int sourceHash = (action.getSource() == null) ? -1 : action.getSource().hashCode();
-        int targetHash = (action.getTargetKey() == null) ? -1 : action.getTargetKey().hashCode();
-        if(sourceHash == -1 && targetHash == -1) {
-            System.err.println("ctrlfme " + action.toString());
-        }
-        return sourceHash + targetHash * 31;
+        return action.toString().hashCode();
     }
 
     @Override

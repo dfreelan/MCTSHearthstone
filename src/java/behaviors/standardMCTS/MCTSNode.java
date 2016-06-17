@@ -27,6 +27,8 @@ public class MCTSNode
     {
         this.context = current;
         this.action = action;
+
+        rand = new Random();
     }
 
     public void step(double exploreFactor)
