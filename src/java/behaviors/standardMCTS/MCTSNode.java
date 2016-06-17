@@ -14,6 +14,8 @@ import behaviors.util.ActionValuePair;
 
 public class MCTSNode
 {
+    private List<GameAction> rootActions;
+
     private double player1Value;
     private double numVisits;
     private SimulationContext context;
@@ -22,6 +24,12 @@ public class MCTSNode
 
     private Random rand;
     private final double epsilon = 1e-6;
+
+    public MCTSNode(SimulationContext current, GameAction action, List<GameAction> rootActions)
+    {
+        this(current, action);
+        this.rootActions = rootActions;
+    }
 
     public MCTSNode(SimulationContext current, GameAction action)
     {
@@ -33,7 +41,7 @@ public class MCTSNode
 
     public void step(double exploreFactor)
     {
-        List<MCTSNode> visited = new LinkedList<MCTSNode>();
+        List<MCTSNode> visited = new LinkedList<>();
 
         MCTSNode cur = this;
         visited.add(this);
@@ -101,13 +109,17 @@ public class MCTSNode
 
     public List<GameAction> expand(IFilter filter)
     {
+        List<GameAction> actions = null;
         if(action != null) {
             context = context.clone();
             context.applyAction(context.getActivePlayerId(), action);
+            actions = context.getValidActions();
             action = null;
+        } else {
+            actions = rootActions;
+            rootActions = null;
         }
 
-        List<GameAction> actions = context.getValidActions();
         for(GameAction possibleAction : actions) {
             if(!filter.prune(context, possibleAction)) {
                 MCTSNode child = new MCTSNode(context, possibleAction);
