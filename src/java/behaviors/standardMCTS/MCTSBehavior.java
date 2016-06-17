@@ -35,17 +35,17 @@ public class MCTSBehavior extends Behaviour
         this.numIterations = numIterations;
         this.rolloutBehavior = rolloutBehavior;
         this.statCompressor = (double[][] accumulateStats) -> {
-            double[] compressed = new double[accumulateStats.length];
-            for(int i = 0; i < accumulateStats.length; i++) {
+            double[] compressed = new double[accumulateStats[0].length];
+            for(int action = 0; action < accumulateStats[0].length; action++) {
                 double numValues = 0;
                 double sum = 0;
-                for(double value : accumulateStats[i]) {
-                    if(value != -1) {
+                for(int tree = 0; tree < accumulateStats.length; tree++) {
+                    if (accumulateStats[tree][action] != -1) {
                         numValues++;
-                        sum += value;
+                        sum += accumulateStats[tree][action];
                     }
                 }
-                compressed[i] = sum / numValues;
+                compressed[action] = sum / numValues;
             }
             return compressed;
         };
