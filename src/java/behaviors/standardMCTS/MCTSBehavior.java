@@ -64,6 +64,10 @@ public class MCTSBehavior extends Behaviour
     @Override
     public GameAction requestAction(GameContext gameContext, Player player, List<GameAction> list)
     {
+        if(list.size() < 1){
+            System.err.println("List size was less than 1!!!!!!!!!!");
+            System.exit(-1);
+        }
         MCTSTree[] trees = new MCTSTree[numTrees];
         double[][] accumulateStats = new double[numTrees][];
 

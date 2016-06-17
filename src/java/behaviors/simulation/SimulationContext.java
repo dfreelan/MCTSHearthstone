@@ -7,6 +7,7 @@ import java.util.Stack;
 import net.demilich.metastone.game.Environment;
 import net.demilich.metastone.game.GameContext;
 import net.demilich.metastone.game.Player;
+import net.demilich.metastone.game.actions.ActionType;
 import net.demilich.metastone.game.actions.GameAction;
 import net.demilich.metastone.game.behaviour.IBehaviour;
 import net.demilich.metastone.game.cards.Card;
@@ -23,7 +24,7 @@ public class SimulationContext implements Cloneable
     {
         GameContext clonedContext = context.clone();
         clonedContext.getLogic().setLoggingEnabled(false);
-        clonedContext.setLogic(new SimulationLogic());
+        //clonedContext.setLogic(new SimulationLogic());
         //change the decks to use deterministic versions of the decks
         clonedContext.getPlayer1().setDeck(new SimulationCardCollection(clonedContext.getPlayer1().getDeck()));
         clonedContext.getPlayer2().setDeck(new SimulationCardCollection(clonedContext.getPlayer2().getDeck()));
@@ -94,7 +95,10 @@ public class SimulationContext implements Cloneable
         cloneEntity(context,clone,Environment.TARGET_OVERRIDE,cloneMap);
         cloneEntity(context,clone,Environment.KILLED_MINION,cloneMap);
         cloneEntity(context,clone,Environment.ATTACKER_REFERENCE,cloneMap);
-        cloneEntity(context,clone,Environment.EVENT_TARGET_REFERENCE_STACK,cloneMap);
+
+        // TODO: 6/17/16 : COMMENTED THIS TO GETIT WORKING!
+        //may need to be replaced with a stack deep clone
+        //cloneEntity(context,clone,Environment.EVENT_TARGET_REFERENCE_STACK,cloneMap);
         cloneEntity(context,clone,Environment.TARGET,cloneMap);
 
 
@@ -141,11 +145,21 @@ public class SimulationContext implements Cloneable
 
     public void applyAction(int playerID, GameAction action)
     {
+
         context.getLogic().performGameAction(context.getActivePlayerId(), action);
+        if(action.getActionType() == ActionType.END_TURN){
+            context.startTurn(context.getActivePlayerId());
+        }
     }
 
     public void playFromMiddle()
     {
         context.playFromMiddle();
+    }
+
+    @Override
+    public String toString(){
+        System.err.println("SIMULATION CONTEXT:");
+        return context.toString();
     }
 }

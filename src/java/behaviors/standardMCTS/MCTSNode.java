@@ -57,9 +57,7 @@ public class MCTSNode
 
         double value = -1;
         if (!cur.context.gameDecided()) {
-            MCTSNode newNode = cur.select(exploreFactor);
-            visited.add(newNode);
-            value = rollOut(newNode, validActions);
+            value = rollOut(cur, validActions);
         } else if (cur.context.getWinningPlayerId() == 0) {
             player1Value = Double.POSITIVE_INFINITY;
             value = 0;
@@ -78,6 +76,7 @@ public class MCTSNode
 
     public double rollOut(MCTSNode node, List<GameAction> validActions)
     {
+
         SimulationContext simulation = node.context.clone();
 
         GameAction randAction = validActions.get(rand.nextInt(validActions.size()));
@@ -114,9 +113,14 @@ public class MCTSNode
             context = context.clone();
             context.applyAction(context.getActivePlayerId(), action);
             actions = context.getValidActions();
-            action = null;
         } else {
+
             actions = rootActions;
+            if(actions.size() < 1){
+                System.err.println("ROOT STATE: was unable to come with actions for the state:" + context.toString());
+                System.err.println("action was: " + action);
+                throw new RuntimeException();
+            }
             rootActions = null;
         }
 
@@ -129,7 +133,11 @@ public class MCTSNode
                 children.add(child);
             }
         }
-
+        if(actions.size() < 1){
+            System.err.println("was unable to come with actions for the state:" + context.toString());
+            System.err.println("action was: " + action);
+            throw new RuntimeException();
+        }
         return actions;
     }
 
