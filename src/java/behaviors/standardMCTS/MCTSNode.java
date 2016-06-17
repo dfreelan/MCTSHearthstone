@@ -60,10 +60,10 @@ public class MCTSNode
             value = rollOut(cur, validActions);
         } else if (cur.context.getWinningPlayerId() == 0) {
             player1Value = Double.POSITIVE_INFINITY;
-            value = 0;
+            value = 1;
         } else if (cur.context.getWinningPlayerId() == 1) {
             player1Value = Double.NEGATIVE_INFINITY;
-            value = 1;
+            value = 0;
         } else {
             player1Value = 0.5;
             value = -1;
