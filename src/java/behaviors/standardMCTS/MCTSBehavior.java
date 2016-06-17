@@ -68,7 +68,7 @@ public class MCTSBehavior extends Behaviour
         double[][] accumulateStats = new double[numTrees][];
 
         for(int i = 0; i < numTrees; i++) {
-            MCTSNode root = new MCTSNode(new SimulationContext(gameContext), null);
+            MCTSNode root = new MCTSNode(new SimulationContext(gameContext), null, list);
             root.getContext().setBehavior(rolloutBehavior);
             root.getContext().randomize(player.getId());
 
