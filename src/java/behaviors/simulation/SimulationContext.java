@@ -35,7 +35,7 @@ public class SimulationContext implements Cloneable
     }
 
     //shuffle deck and make a random hand for my opponent
-    public void Randomize(int myId) {
+    public void randomize(int myId) {
 
         //figure out who my opponent is
         Player opponent;
