@@ -44,7 +44,7 @@ public class MCTSNode
 
         List<GameAction> validActions = null;
         if (!cur.context.gameDecided()) {
-            validActions = cur.expand((SimulationContext c, GameAction a) -> false);
+            validActions = cur.expand((context, gameAction) -> false);
         }
 
         double value = -1;
