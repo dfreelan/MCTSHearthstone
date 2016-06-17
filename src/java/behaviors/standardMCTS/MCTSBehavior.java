@@ -1,5 +1,6 @@
 package behaviors.standardMCTS;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
@@ -120,6 +121,6 @@ public class MCTSBehavior extends Behaviour
 
     @Override
     public List<Card> mulligan(GameContext gameContext, Player player, List<Card> list) {
-        return null;
+        return new ArrayList<Card>();
     }
 }
