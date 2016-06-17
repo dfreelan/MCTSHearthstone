@@ -21,12 +21,13 @@ public class SimulationContext implements Cloneable
 
     public SimulationContext(GameContext context)
     {
-        context.getLogic().setLoggingEnabled(false);
-        this.context = context;
-        context.setLogic(new SimulationLogic());
+        GameContext clonedContext = context.clone();
+        clonedContext.getLogic().setLoggingEnabled(false);
+        clonedContext.setLogic(new SimulationLogic());
         //change the decks to use deterministic versions of the decks
-        context.getPlayer1().setDeck(new SimulationCardCollection(context.getPlayer1().getDeck()));
-        context.getPlayer2().setDeck(new SimulationCardCollection(context.getPlayer2().getDeck()));
+        clonedContext.getPlayer1().setDeck(new SimulationCardCollection(clonedContext.getPlayer1().getDeck()));
+        clonedContext.getPlayer2().setDeck(new SimulationCardCollection(clonedContext.getPlayer2().getDeck()));
+        this.context = clonedContext;
    }
 
     public SimulationContext(Player player1, Player player2, GameLogic logic, DeckFormat deckFormat)

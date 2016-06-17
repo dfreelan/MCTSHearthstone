@@ -25,6 +25,8 @@ public class MCTSBehavior extends Behaviour
     private IBehaviour rolloutBehavior;
     private IArrayCompressor<double[]> statCompressor;
 
+    private String name = "MCTSBehavior";
+
     public MCTSBehavior(double exploreFactor, int numTrees, int numIterations, IBehaviour rolloutBehavior)
     {
         super();
@@ -115,9 +117,9 @@ public class MCTSBehavior extends Behaviour
     }
 
     @Override
-    public String getName() {
-        return "MCTSBehavior";
-    }
+    public String getName() { return name; }
+
+    public void setName(String newName) { name = newName; }
 
     @Override
     public List<Card> mulligan(GameContext gameContext, Player player, List<Card> list) {
