@@ -76,7 +76,6 @@ public class MCTSNode
 
     public double rollOut(MCTSNode node, List<GameAction> validActions)
     {
-
         SimulationContext simulation = node.context.clone();
 
         GameAction randAction = validActions.get(rand.nextInt(validActions.size()));
@@ -116,28 +115,22 @@ public class MCTSNode
         } else {
 
             actions = rootActions;
-            if(actions.size() < 1){
-                System.err.println("ROOT STATE: was unable to come with actions for the state:" + context.toString());
-                System.err.println("action was: " + action);
-                throw new RuntimeException();
-            }
             rootActions = null;
         }
 
-        for(GameAction possibleAction : actions) {
-            if(!filter.prune(context, possibleAction)) {
-                MCTSNode child = new MCTSNode(context, possibleAction);
-                if(children == null) {
-                    children = new LinkedList<>();
+        if(!context.gameDecided()) {
+            for (GameAction possibleAction : actions) {
+                if (!filter.prune(context, possibleAction)) {
+                    MCTSNode child = new MCTSNode(context, possibleAction);
+                    if (children == null) {
+                        children = new LinkedList<>();
+                    }
+                    children.add(child);
                 }
-                children.add(child);
             }
+            assert actions.size() > 0;
         }
-        if(actions.size() < 1){
-            System.err.println("was unable to come with actions for the state:" + context.toString());
-            System.err.println("action was: " + action);
-            throw new RuntimeException();
-        }
+
         return actions;
     }
 
