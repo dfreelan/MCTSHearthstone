@@ -109,6 +109,9 @@ public class MCTSNode
         for(GameAction possibleAction : actions) {
             if(!filter.prune(context, possibleAction)) {
                 MCTSNode child = new MCTSNode(context, possibleAction);
+                if(children == null) {
+                    children = new LinkedList<>();
+                }
                 children.add(child);
             }
         }
@@ -149,8 +152,10 @@ public class MCTSNode
     public List<ActionValuePair> getChildValues(int playerID)
     {
         List<ActionValuePair> childValues = new ArrayList<>();
-        for(MCTSNode child : children) {
-            childValues.add(new ActionValuePair(child.action, child.getValue(playerID)));
+        if(children != null) {
+            for (MCTSNode child : children) {
+                childValues.add(new ActionValuePair(child.action, child.getValue(playerID)));
+            }
         }
         return childValues;
     }
