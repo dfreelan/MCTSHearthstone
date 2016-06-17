@@ -7,6 +7,7 @@ import java.util.Stack;
 import net.demilich.metastone.game.Environment;
 import net.demilich.metastone.game.GameContext;
 import net.demilich.metastone.game.Player;
+import net.demilich.metastone.game.actions.ActionType;
 import net.demilich.metastone.game.actions.GameAction;
 import net.demilich.metastone.game.behaviour.IBehaviour;
 import net.demilich.metastone.game.cards.Card;
@@ -144,7 +145,11 @@ public class SimulationContext implements Cloneable
 
     public void applyAction(int playerID, GameAction action)
     {
+
         context.getLogic().performGameAction(context.getActivePlayerId(), action);
+        if(action.getActionType() == ActionType.END_TURN){
+            context.startTurn(context.getActivePlayerId());
+        }
     }
 
     public void playFromMiddle()
