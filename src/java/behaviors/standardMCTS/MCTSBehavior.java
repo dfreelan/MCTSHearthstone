@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 import behaviors.util.ActionValuePair;
+import behaviors.util.IArrayCompressor;
 import net.demilich.metastone.game.GameContext;
 import net.demilich.metastone.game.Player;
 import net.demilich.metastone.game.actions.GameAction;
@@ -15,15 +16,13 @@ import net.demilich.metastone.game.cards.Card;
 
 import behaviors.simulation.SimulationContext;
 
-/**
- * Created by dfreelan on 6/16/16.
- */
 public class MCTSBehavior extends Behaviour
 {
-    double exploreFactor;
-    int numTrees;
-    int numIterations;
-    IBehaviour rolloutBehavior;
+    private double exploreFactor;
+    private int numTrees;
+    private int numIterations;
+    private IBehaviour rolloutBehavior;
+    private IArrayCompressor<double[]> statCompressor;
 
     public MCTSBehavior(double exploreFactor, int numTrees, int numIterations, IBehaviour rolloutBehavior)
     {
@@ -32,6 +31,31 @@ public class MCTSBehavior extends Behaviour
         this.numTrees = numTrees;
         this.numIterations = numIterations;
         this.rolloutBehavior = rolloutBehavior;
+        this.statCompressor = (double[][] accumulateStats) -> {
+            double[] compressed = new double[accumulateStats.length];
+            for(int i = 0; i < accumulateStats.length; i++) {
+                double numValues = 0;
+                double sum = 0;
+                for(double value : accumulateStats[i]) {
+                    if(value != -1) {
+                        numValues++;
+                        sum += value;
+                    }
+                }
+                compressed[i] = sum / numValues;
+            }
+            return compressed;
+        };
+    }
+
+    public MCTSBehavior(double exploreFactor, int numTrees, int numIterations, IBehaviour rolloutBehavior, IArrayCompressor<double[]> statCompressor)
+    {
+        super();
+        this.exploreFactor = exploreFactor;
+        this.numTrees = numTrees;
+        this.numIterations = numIterations;
+        this.rolloutBehavior = rolloutBehavior;
+        this.statCompressor = statCompressor;
     }
 
     @Override
@@ -45,7 +69,11 @@ public class MCTSBehavior extends Behaviour
 
         for(int i = 0; i < numTrees; i++) {
             trees[i] = new MCTSTree(exploreFactor, root);
+
             accumulateStats[i] = new double[list.size()];
+            for(int j = 0; j < accumulateStats[i].length; j++) {
+                accumulateStats[i][j] = -1;
+            }
         }
 
         Map<Integer, Integer> hashToIndex = new HashMap<>();
@@ -55,26 +83,31 @@ public class MCTSBehavior extends Behaviour
 
         IntStream.range(0, numTrees).parallel().forEach((int i) -> runForest(trees, accumulateStats, hashToIndex, i));
 
-        //collapse accumulated stats into 1D array using a functional interface
-        //find action with highest value
-        //return that action
+        double[] actionValues = statCompressor.compress(accumulateStats);
 
-        return null;
+        int maxIndex = 0;
+        for(int i = 1; i < actionValues.length; i++) {
+            if(actionValues[i] > actionValues[maxIndex]) {
+                maxIndex = i;
+            }
+        }
+
+        return list.get(maxIndex);
     }
 
-    public void runForest(MCTSTree[] trees, double[][] accumulateStats, Map<Integer, Integer> actionHashToIndex, int treeIndex)
+    private void runForest(MCTSTree[] trees, double[][] accumulateStats, Map<Integer, Integer> actionHashToIndex, int treeIndex)
     {
         trees[treeIndex].run(numIterations / numTrees);
 
         MCTSNode root = trees[treeIndex].getRoot();
         List<ActionValuePair> actionValues = root.getChildValues(root.getContext().getActivePlayerId());
         for(ActionValuePair actionValue : actionValues) {
-            int actionIndex = actionHashToIndex.get(actionValue.action);
+            int actionIndex = actionHashToIndex.get(actionHash(actionValue.action));
             accumulateStats[treeIndex][actionIndex] = actionValue.value;
         }
     }
 
-    public int actionHash(GameAction action)
+    private int actionHash(GameAction action)
     {
         return action.getSource().hashCode() + action.getTargetKey().hashCode() * 31;
     }

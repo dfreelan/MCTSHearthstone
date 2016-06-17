@@ -61,7 +61,6 @@ public class SimulationContext implements Cloneable
         }
     }
 
-
     private void cloneEntity(GameContext state, GameContext clone, Environment e, HashMap cloneMap){
         Entity entity = (Entity) state.getEnvironment().get(e);
         if (entity != null) {
@@ -69,6 +68,7 @@ public class SimulationContext implements Cloneable
             cloneMap.put(e, entity);
         }
     }
+
     @Override
     public SimulationContext clone()
     {
