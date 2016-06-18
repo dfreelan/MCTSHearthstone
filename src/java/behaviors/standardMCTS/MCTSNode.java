@@ -39,7 +39,7 @@ public class MCTSNode
         rand = new Random();
     }
 
-    public void step(double exploreFactor)
+    public void step(double exploreFactor, IFilter actionPrune)
     {
         List<MCTSNode> visited = new LinkedList<>();
 
@@ -52,7 +52,7 @@ public class MCTSNode
 
         List<GameAction> validActions = null;
         if (!cur.context.gameDecided()) {
-            validActions = cur.expand((context, gameAction) -> false);
+            validActions = cur.expand(actionPrune);
         }
 
         double value = -1;
@@ -105,7 +105,7 @@ public class MCTSNode
         return bestNode;
     }
 
-    public List<GameAction> expand(IFilter filter)
+    public List<GameAction> expand(IFilter actionPrune)
     {
         List<GameAction> actions = null;
         if(action != null) {
@@ -120,7 +120,7 @@ public class MCTSNode
 
         if(!context.gameDecided()) {
             for (GameAction possibleAction : actions) {
-                if (!filter.prune(context, possibleAction)) {
+                if (!actionPrune.prune(context, possibleAction)) {
                     MCTSNode child = new MCTSNode(context, possibleAction);
                     if (children == null) {
                         children = new LinkedList<>();

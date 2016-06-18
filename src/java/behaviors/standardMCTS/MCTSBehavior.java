@@ -6,15 +6,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.IntStream;
 
-import behaviors.util.ActionValuePair;
-import behaviors.util.IArrayCompressor;
 import net.demilich.metastone.game.GameContext;
 import net.demilich.metastone.game.Player;
+import net.demilich.metastone.game.actions.ActionType;
 import net.demilich.metastone.game.actions.GameAction;
 import net.demilich.metastone.game.behaviour.Behaviour;
 import net.demilich.metastone.game.behaviour.IBehaviour;
 import net.demilich.metastone.game.cards.Card;
 
+import behaviors.util.ActionValuePair;
+import behaviors.util.IArrayCompressor;
+import behaviors.util.IFilter;
 import behaviors.simulation.SimulationContext;
 
 public class MCTSBehavior extends Behaviour
@@ -24,6 +26,7 @@ public class MCTSBehavior extends Behaviour
     private int numIterations;
     private IBehaviour rolloutBehavior;
     private IArrayCompressor<double[]> statCompressor;
+    private IFilter actionPrune;
 
     private String name = "MCTSBehavior";
 
@@ -49,9 +52,12 @@ public class MCTSBehavior extends Behaviour
             }
             return compressed;
         };
+        this.actionPrune = (SimulationContext context, GameAction action) -> {
+            return action.getActionType() == ActionType.SUMMON && action.getTargetKey() != null;
+        };
     }
 
-    public MCTSBehavior(double exploreFactor, int numTrees, int numIterations, IBehaviour rolloutBehavior, IArrayCompressor<double[]> statCompressor)
+    public MCTSBehavior(double exploreFactor, int numTrees, int numIterations, IBehaviour rolloutBehavior, IArrayCompressor<double[]> statCompressor, IFilter actionPrune)
     {
         super();
         this.exploreFactor = exploreFactor;
@@ -59,6 +65,7 @@ public class MCTSBehavior extends Behaviour
         this.numIterations = numIterations;
         this.rolloutBehavior = rolloutBehavior;
         this.statCompressor = statCompressor;
+        this.actionPrune = actionPrune;
     }
 
     @Override
@@ -76,7 +83,7 @@ public class MCTSBehavior extends Behaviour
             root.getContext().setBehavior(rolloutBehavior);
             root.getContext().randomize(player.getId());
 
-            trees[i] = new MCTSTree(exploreFactor, root);
+            trees[i] = new MCTSTree(exploreFactor, root, actionPrune);
 
             accumulateStats[i] = new double[list.size()];
             for(int j = 0; j < accumulateStats[i].length; j++) {
