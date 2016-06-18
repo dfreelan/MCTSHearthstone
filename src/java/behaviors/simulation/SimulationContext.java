@@ -37,11 +37,11 @@ public class SimulationContext implements Cloneable
     }
 
     //shuffle deck and make a random hand for my opponent
-    public void randomize(int myId) {
+    public void randomize(int playerID) {
 
         //figure out who my opponent is
         Player opponent;
-        if (myId == 0) {
+        if (playerID == 0) {
             opponent = context.getPlayer2();
         } else {
             opponent = context.getPlayer1();
@@ -156,6 +156,8 @@ public class SimulationContext implements Cloneable
     {
         context.playFromMiddle();
     }
+
+    public void play() { context.play(); }
 
     @Override
     public String toString(){
