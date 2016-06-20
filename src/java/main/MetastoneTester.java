@@ -27,7 +27,6 @@ public class MetastoneTester
     {
         long beginTime = System.nanoTime();
         stats = new double[5];
-
         boolean parallel = true;
         int simulations = 1;
 
