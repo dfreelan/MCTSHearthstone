@@ -143,7 +143,6 @@ public class SimulationContext implements Cloneable
     {
         List<GameAction> actions = new ArrayList<GameAction>();
         if (getLogic().battlecries != null) {
-            System.err.println("BATTLECRY ALERT!!!");
             actions = getLogic().battlecries;
             getLogic().battlecries = null;
         } else {
