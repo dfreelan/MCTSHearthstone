@@ -28,7 +28,9 @@ public class SimulationContext implements Cloneable
         GameContext clonedContext = context.clone();
 
         clonedContext.getLogic().setLoggingEnabled(false);
-        clonedContext.setLogic(new SimulationLogic(clonedContext.getLogic()));
+        if(! (context.getLogic() instanceof SimulationLogic)) {
+            clonedContext.setLogic(new SimulationLogic(clonedContext.getLogic()));
+        }
         //change the decks to use deterministic versions of the decks
         clonedContext.getPlayer1().setDeck(new SimulationCardCollection(clonedContext.getPlayer1().getDeck()));
         clonedContext.getPlayer2().setDeck(new SimulationCardCollection(clonedContext.getPlayer2().getDeck()));
@@ -81,7 +83,7 @@ public class SimulationContext implements Cloneable
     public SimulationContext clone()
     {
         GameContext clone = this.context.clone();
-
+        clone.setLogic(getLogic().clone());
 
         HashMap cloneMap = (HashMap)clone.getEnvironment();
 
@@ -155,13 +157,21 @@ public class SimulationContext implements Cloneable
     }
     public void applyAction(int playerID, GameAction action)
     {
-        getLogic().simulationActive = true;
         getLogic().battlecries = null;
-        getLogic().performGameAction(context.getActivePlayerId(), action);
-        getLogic().simulationActive = false;
+        context.setIsInBattleCry(false);
 
-        if(action.getActionType() == ActionType.END_TURN){
-            context.startTurn(context.getActivePlayerId());
+        if(action.getActionType() == ActionType.BATTLECRY){
+            performBattlecryAction(action);
+
+        }else {
+            getLogic().simulationActive = true;
+            getLogic().performGameAction(context.getActivePlayerId(), action);
+            getLogic().simulationActive = false;
+            context.setIsInBattleCry(false);
+
+            if (action.getActionType() == ActionType.END_TURN) {
+                context.startTurn(context.getActivePlayerId());
+            }
         }
     }
 
@@ -171,6 +181,8 @@ public class SimulationContext implements Cloneable
     }
 
     public void performBattlecryAction(GameAction battlecry) {
+       
+
         boolean resolvedLate = getLogic().minion.getBattlecry().isResolvedLate();
 
         getLogic().performGameAction(context.getActivePlayerId(), battlecry);
@@ -183,10 +195,10 @@ public class SimulationContext implements Cloneable
         }
 
         getLogic().afterCardPlayed(context.getActivePlayerId(), getLogic().source.getCardReference());
-        context.getEnvironment().remove(Environment.PENDING_CARD);
-        context.getEnvironment().remove(Environment.TARGET);
+        context.setPendingCard(null);
         getLogic().minion = null;
         getLogic().resolveBattlecry = false;
+        getLogic().battlecries = null;
 
     }
     public void play() { context.play(); }

@@ -31,7 +31,7 @@ public class MetastoneTester
         boolean parallel = true;
         int simulations = 1;
 
-        String deckName = "nobattlecryhunter";
+        String deckName = "controlwarrior";
         int numTrees = 20;
         int numIterations = 10000;
         double exploreFactor = 1.4;

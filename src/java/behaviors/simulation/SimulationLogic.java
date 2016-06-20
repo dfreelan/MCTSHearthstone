@@ -34,8 +34,9 @@ public class SimulationLogic extends GameLogic {
     public boolean rolloutActive;
 
     public SimulationLogic(GameLogic parent) {
-        super(parent.getIdFactory());
+        super(parent.getIdFactory().clone());
         super.setLoggingEnabled(false);
+
         this.setContext((parent.getGameContext()));
     }
 
@@ -104,12 +105,16 @@ public boolean summon(int playerId, Minion minion, Card source, int index, boole
 		if (resolveBattlecry && minion.getBattlecry() != null && !minion.getBattlecry().isResolvedLate()) {
             this.resolveBattlecry = resolveBattlecry;
             this.playerId = playerId;
-            this.minion = minion;
-            this.source = source;
+            this.minion = minion.clone();
+
+            this.source = source.clone();
             this.index = index;
             resolveBattlecry(player.getId(), minion);
-            if (this.battlecryRequest)
+            getGameContext().setIsInBattleCry(true);
+            if (this.battlecryRequest) {
+
                 return true;
+            }
         }
 
 		if (getGameContext().getEnvironment().get(Environment.TRANSFORM_REFERENCE) != null) {
@@ -138,12 +143,16 @@ public boolean summon(int playerId, Minion minion, Card source, int index, boole
         if (resolveBattlecry && minion.getBattlecry() != null && minion.getBattlecry().isResolvedLate()) {
             this.resolveBattlecry = resolveBattlecry;
             this.playerId = playerId;
-            this.minion = minion;
-            this.source = source;
+
+            this.minion = minion.clone();
+            this.source = source.clone();
             this.index = index;
+            getGameContext().setIsInBattleCry(true);
             resolveBattlecry(player.getId(), minion);
-            if (this.battlecryRequest)
+            if (this.battlecryRequest) {
+
                 return true;
+            }
         }
 
 		handleEnrage(minion);
@@ -202,6 +211,8 @@ public boolean summon(int playerId, Minion minion, Card source, int index, boole
                 this.battlecries = (ArrayList<GameAction>) battlecryActions;
                 this.battlecryRequest = true;
                 return;
+            }else{
+               // System.err.println("it is false sometimes");
             }
             battlecryAction = player.getBehaviour().requestAction(getGameContext(), player, battlecryActions);
         } else {
@@ -216,7 +227,23 @@ public boolean summon(int playerId, Minion minion, Card source, int index, boole
         }
         checkForDeadEntities();
     }
+    @Override
+    public SimulationLogic clone() {
+        //System.err.println("we are calling the correct clone");
+        SimulationLogic clone = new SimulationLogic(this);
+        clone.playerId = this.playerId;
+        if (this.minion != null) {
+            clone.minion = this.minion.clone();
 
+        }
+        if (this.source != null) {
+            clone.source = this.source.clone();
+        }
+        clone.index = this.index;
+        clone.resolveBattlecry = this.resolveBattlecry;
+        //clone.debugHistory = new LinkedList<>(debugHistory);
+        return clone;
+    }
 }
 /*if (simulationActive) {
 
