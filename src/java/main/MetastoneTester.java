@@ -27,7 +27,6 @@ public class MetastoneTester
     {
         long beginTime = System.nanoTime();
         stats = new double[5];
-
         int simulations = 1;
         String deckName = "http://www.hearthpwn.com/decks/81605-breebotjr-control-warrior";
         int numTrees = 1;//20;
