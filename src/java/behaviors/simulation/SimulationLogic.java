@@ -13,6 +13,7 @@ import net.demilich.metastone.game.events.BoardChangedEvent;
 import net.demilich.metastone.game.events.GameEvent;
 import net.demilich.metastone.game.events.SummonEvent;
 import net.demilich.metastone.game.logic.GameLogic;
+import net.demilich.metastone.game.targeting.EntityReference;
 import net.demilich.metastone.game.targeting.TargetSelection;
 
 import java.util.ArrayList;
@@ -86,15 +87,27 @@ public class SimulationLogic extends GameLogic {
     }
 
     @Override
-    public boolean summon(int playerId, Minion minion, Card source, int index, boolean resolveBattlecry) {
-        Player player = getGameContext().getPlayer(playerId);
 
-        minion.setId(getIdFactory().generateId());
-        minion.setOwner(player.getId());
+public boolean summon(int playerId, Minion minion, Card source, int index, boolean resolveBattlecry) {
+		Player player = getGameContext().getPlayer(playerId);
+		if (!canSummonMoreMinions(player)) {
+			//log("{} cannot summon any more minions, {} is destroyed", player.getName(), minion);
+			return false;
+		}
+		minion.setId(getIdFactory().generateId());
+		minion.setOwner(player.getId());
 
-        getGameContext().getSummonReferenceStack().push(minion.getReference());
+		getGameContext().getSummonReferenceStack().push(minion.getReference());
 
-        if (resolveBattlecry && minion.getBattlecry() != null && !minion.getBattlecry().isResolvedLate()) {
+		//log("{} summons {}", player.getName(), minion);
+
+		if (index < 0 || index >= player.getMinions().size()) {
+			player.getMinions().add(minion);
+		} else {
+			player.getMinions().add(index, minion);
+		}
+
+		if (resolveBattlecry && minion.getBattlecry() != null && !minion.getBattlecry().isResolvedLate()) {
             this.resolveBattlecry = resolveBattlecry;
             this.playerId = playerId;
             this.minion = minion;
@@ -105,34 +118,28 @@ public class SimulationLogic extends GameLogic {
                 return true;
         }
 
-        if (getGameContext().getEnvironment().get(Environment.TRANSFORM_REFERENCE) != null) {
-            minion = (Minion) getGameContext().getEnvironment().get(Environment.TRANSFORM_REFERENCE);
-            minion.setBattlecry(null);
+		if (getGameContext().getEnvironment().get(Environment.TRANSFORM_REFERENCE) != null) {
+			minion = (Minion) getGameContext().resolveSingleTarget((EntityReference) getGameContext().getEnvironment().get(Environment.TRANSFORM_REFERENCE));
+			minion.setBattlecry(null);
             getGameContext().getEnvironment().remove(Environment.TRANSFORM_REFERENCE);
-        }
+		}
 
-        if (index < 0 || index >= player.getMinions().size()) {
-            player.getMinions().add(minion);
-        } else {
-            player.getMinions().add(index, minion);
-        }
+        getGameContext().fireGameEvent(new BoardChangedEvent(getGameContext()));
 
-        SummonEvent summonEvent = new SummonEvent(getGameContext(), minion, source);
+		player.getStatistics().minionSummoned(minion);
+		SummonEvent summonEvent = new SummonEvent(getGameContext(), minion, source);
         getGameContext().fireGameEvent(summonEvent);
 
-        applyAttribute(minion, Attribute.SUMMONING_SICKNESS);
-        refreshAttacksPerRound(minion);
-        if (player.getHero().hasAttribute(Attribute.CANNOT_REDUCE_HP_BELOW_1)) {
-            minion.setAttribute(Attribute.CANNOT_REDUCE_HP_BELOW_1);
-        }
+		applyAttribute(minion, Attribute.SUMMONING_SICKNESS);
+		refreshAttacksPerRound(minion);
 
-        if (minion.hasSpellTrigger()) {
-            addGameEventListener(player, minion.getSpellTrigger(), minion);
-        }
+		if (minion.hasSpellTrigger()) {
+			addGameEventListener(player, minion.getSpellTrigger(), minion);
+		}
 
-        if (minion.getCardCostModifier() != null) {
-            addManaModifier(player, minion.getCardCostModifier(), minion);
-        }
+		if (minion.getCardCostModifier() != null) {
+			addManaModifier(player, minion.getCardCostModifier(), minion);
+		}
 
         if (resolveBattlecry && minion.getBattlecry() != null && minion.getBattlecry().isResolvedLate()) {
             this.resolveBattlecry = resolveBattlecry;
@@ -145,13 +152,12 @@ public class SimulationLogic extends GameLogic {
                 return true;
         }
 
-        handleEnrage(minion);
+		handleEnrage(minion);
 
         getGameContext().getSummonReferenceStack().pop();
         getGameContext().fireGameEvent(new BoardChangedEvent(getGameContext()));
-        return true;
-    }
-
+		return true;
+	}
     @Override
     public void performGameAction(int playerId, GameAction action) {
         if (playerId != getGameContext().getActivePlayerId()) {
@@ -197,26 +203,30 @@ public class SimulationLogic extends GameLogic {
                 targetedBattlecry.setTarget(validTarget);
                 battlecryActions.add(targetedBattlecry);
             }
-
             if (simulationActive) {
 
                 this.battlecries = (ArrayList<GameAction>) battlecryActions;
                 this.battlecryRequest = true;
                 return;
             }
-            // System.err.println("requesting a response to a battlecry action");
-
             battlecryAction = player.getBehaviour().requestAction(getGameContext(), player, battlecryActions);
-            //System.err.println("request received");
         } else {
             battlecryAction = battlecry;
         }
-        performGameAction(playerId, battlecryAction);
         if (hasAttribute(player, Attribute.DOUBLE_BATTLECRIES) && actor.getSourceCard().hasAttribute(Attribute.BATTLECRY)) {
+            // You need DOUBLE_BATTLECRIES before your battlecry action, not after.
+            performGameAction(playerId, battlecryAction);
+            performGameAction(playerId, battlecryAction);
+        } else {
             performGameAction(playerId, battlecryAction);
         }
         checkForDeadEntities();
     }
 
 }
+/*if (simulationActive) {
 
+                this.battlecries = (ArrayList<GameAction>) battlecryActions;
+                this.battlecryRequest = true;
+                return;
+            }*/
