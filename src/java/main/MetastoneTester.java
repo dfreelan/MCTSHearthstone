@@ -58,21 +58,25 @@ public class MetastoneTester
         }
         if(keyExists("-deck", args)) {
             deckName = argumentForKey("-deck", args);
+            deckName2 = deckName;
         }
         if(keyExists("-trees", args)) {
             numTrees = Integer.parseInt(argumentForKey("-trees", args));
+            numTrees2 = numTrees;
             if(numTrees < 1) {
                 throw new RuntimeException("Error: there must be at least one tree.");
             }
         }
         if(keyExists("-iterations", args)) {
             numIterations = Integer.parseInt(argumentForKey("-iterations", args));
+            numIterations2 = numIterations;
             if(numIterations < 1) {
                 throw new RuntimeException("Error: there must be at least one iteration.");
             }
         }
         if(keyExists("-explore", args)) {
             exploreFactor = Integer.parseInt(argumentForKey("-explore", args));
+            exploreFactor2 = exploreFactor;
         }
         if(keyExists("-behavior2", args)) {
             String behavior2Arg = argumentForKey("-behavior2", args);
