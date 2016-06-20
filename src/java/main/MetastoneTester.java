@@ -29,7 +29,7 @@ public class MetastoneTester
         stats = new double[5];
 
         int simulations = 1;
-        String deckName = "nobattlecry";
+        String deckName = "http://www.hearthpwn.com/decks/81605-breebotjr-control-warrior";
         int numTrees = 1;//20;
         int numIterations = 10000;
         double exploreFactor = 1.4;

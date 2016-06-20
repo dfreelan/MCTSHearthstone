@@ -1,5 +1,6 @@
 package behaviors.simulation;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Stack;
@@ -149,7 +150,14 @@ public class SimulationContext implements Cloneable
 
     public List<GameAction> getValidActions()
     {
-        return context.getValidActions();
+        List<GameAction> actions = new ArrayList<GameAction>();
+        if (getLogic().battlecries != null) {
+            actions = getLogic().battlecries;
+            getLogic().battlecries = null;
+        } else {
+            actions = context.getValidActions();
+        }
+        return actions;
     }
     public SimulationLogic getLogic(){
         return (SimulationLogic)context.getLogic();
@@ -185,9 +193,7 @@ public class SimulationContext implements Cloneable
 
         getLogic().afterCardPlayed(context.getActivePlayerId(), getLogic().source.getCardReference());
         context.getEnvironment().remove(Environment.PENDING_CARD);
-
         context.getEnvironment().remove(Environment.TARGET);
-
         getLogic().minion = null;
         getLogic().resolveBattlecry = false;
 
