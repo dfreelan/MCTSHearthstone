@@ -28,17 +28,28 @@ public class MetastoneTester
         long beginTime = System.nanoTime();
         stats = new double[5];
 
+        boolean parallel = true;
         int simulations = 1;
-        String deckName = "http://www.hearthpwn.com/decks/81605-breebotjr-control-warrior";
-        int numTrees = 1;//20;
+
+        String deckName = "nobattlecryrogue";
+        int numTrees = 20;
         int numIterations = 10000;
         double exploreFactor = 1.4;
-        boolean parallel = true;
-        IBehaviour behavior2 = new PlayRandomBehaviour();
+
+        String deckName2 = deckName;
         int numTrees2 = numTrees;
         int numIterations2 = numIterations;
         double exploreFactor2 = exploreFactor;
+        IBehaviour behavior2 = new PlayRandomBehaviour();
 
+        if(keyExists("-parallel", args)) {
+            String parallelArg = argumentForKey("-parallel", args);
+            if("false".startsWith(parallelArg.toLowerCase())) {
+                parallel = false;
+            } else if(!"true".startsWith(parallelArg.toLowerCase())) {
+                throw new RuntimeException("Error: neither true nor false starts with " + parallelArg + ".");
+            }
+        }
         if(keyExists("-simulations", args)) {
             simulations = Integer.parseInt(argumentForKey("-simulations", args));
             if(simulations < 1) {
@@ -63,14 +74,6 @@ public class MetastoneTester
         if(keyExists("-explore", args)) {
             exploreFactor = Integer.parseInt(argumentForKey("-explore", args));
         }
-        if(keyExists("-parallel", args)) {
-            String parallelArg = argumentForKey("-parallel", args);
-            if("false".startsWith(parallelArg.toLowerCase())) {
-                parallel = false;
-            } else if(!"true".startsWith(parallelArg.toLowerCase())) {
-                throw new RuntimeException("Error: neither true nor false starts with " + parallelArg + ".");
-            }
-        }
         if(keyExists("-behavior2", args)) {
             String behavior2Arg = argumentForKey("-behavior2", args);
             switch(behavior2Arg.toLowerCase()) {
@@ -79,6 +82,9 @@ public class MetastoneTester
                 case "mcts": behavior2 = null; break;
                 default: throw new RuntimeException("Error: " + behavior2Arg + " behavior does not exist.");
             }
+        }
+        if(keyExists("-deck2", args)) {
+            deckName2 = argumentForKey("-deck2", args);
         }
         if(keyExists("-trees2", args)) {
             numTrees2 = Integer.parseInt(argumentForKey("-trees2", args));
@@ -136,14 +142,14 @@ public class MetastoneTester
             IntStream.range(0, simulations).sequential().forEach((int i) -> runSimulation(game.clone()));
         }
 
-        stats[3] = System.nanoTime() - beginTime;
-        stats[4] = stats[3] / simulations;
+        stats[3] = Math.round((System.nanoTime() - beginTime) / 1e9);
+        stats[4] = Math.round(stats[3] / simulations);
 
         System.out.println("Wins: " + stats[1]);
         System.out.println("Losses: " + stats[2]);
         System.out.println("Ties: " + stats[0]);
-        System.out.println("Time Elapsed: " + stats[3]);
-        System.out.println("Average Time Per Game: " + stats[4]);
+        System.out.println("Time Elapsed: " + stats[3] + "s");
+        System.out.println("Average Time Per Game: " + stats[4] + "s");
     }
 
     private static void runSimulation(SimulationContext game)
@@ -163,8 +169,11 @@ public class MetastoneTester
     {
         String url = null;
         switch (name.toLowerCase()) {
-            case "nobattlecry":
-                url = "http://www.hearthpwn.com/decks/574146-no-battlecry";
+            case "nobattlecryrogue":
+                url = "http://www.hearthpwn.com/decks/574146-no-battlecry-rogue";
+                break;
+            case "controlwarrior":
+                url = "http://www.hearthpwn.com/decks/81605-breebotjr-control-warrior";
                 break;
             default:
                 url = name;

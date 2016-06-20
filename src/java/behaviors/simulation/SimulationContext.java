@@ -16,6 +16,7 @@ import net.demilich.metastone.game.decks.DeckFormat;
 import net.demilich.metastone.game.entities.Entity;
 import net.demilich.metastone.game.entities.minions.Minion;
 import net.demilich.metastone.game.logic.GameLogic;
+import net.demilich.metastone.game.targeting.EntityReference;
 
 public class SimulationContext implements Cloneable
 {
@@ -79,48 +80,7 @@ public class SimulationContext implements Cloneable
     @Override
     public SimulationContext clone()
     {
-        GameContext clone = context.clone();
-        HashMap cloneMap = clone.getEnvironment();
-
-        //this stuff is just making sure we REALLY deep clone this for battlecries.
-        //TODO: only do this stuff if the action is a battlecry (if possible?)
-        Stack<Minion> newStack = (Stack<Minion>) ((Stack<Minion>) context.getEnvironment().get(Environment.SUMMON_REFERENCE_STACK));
-        if (newStack != null) {
-            newStack = (Stack<Minion>) newStack.clone();
-            for (int i = 0; i < newStack.size(); i++) {
-                newStack.set(i, (Minion) ((Minion) newStack.get(i)).clone());
-            }
-            cloneMap.put(Environment.SUMMON_REFERENCE_STACK, newStack);
-        }
-        Card pending = (Card) context.getEnvironment().get(Environment.PENDING_CARD);
-        if (pending != null) {
-            pending = pending.clone();
-            cloneMap.put(Environment.PENDING_CARD, pending);
-        }
-        cloneEntity(context,clone,Environment.TARGET_OVERRIDE,cloneMap);
-        cloneEntity(context,clone,Environment.KILLED_MINION,cloneMap);
-        cloneEntity(context,clone,Environment.ATTACKER_REFERENCE,cloneMap);
-
-
-        Stack<Entity> targetStack = (Stack<Entity>) ((Stack<Entity>) context.getEnvironment().get(Environment.SUMMON_REFERENCE_STACK));
-        if (targetStack != null) {
-            targetStack = (Stack<Entity>) targetStack.clone();
-            for (int i = 0; i < targetStack.size(); i++) {
-                targetStack.set(i, (Minion) ((Minion) targetStack.get(i)).clone());
-            }
-            cloneMap.put(Environment.SUMMON_REFERENCE_STACK, targetStack);
-        }
-
-        cloneEntity(context,clone,Environment.TARGET,cloneMap);
-
-
-        Minion transform = (Minion) context.getEnvironment().get(Environment.TRANSFORM_REFERENCE);
-        if (transform != null) {
-            transform = transform.clone();
-            cloneMap.put(Environment.TRANSFORM_REFERENCE, transform);
-        }
-        clone.getLogic().setLoggingEnabled(false);
-        return new SimulationContext(clone);
+        return new SimulationContext(context.clone());
     }
 
     public boolean gameDecided()
@@ -153,6 +113,7 @@ public class SimulationContext implements Cloneable
     {
         List<GameAction> actions = new ArrayList<GameAction>();
         if (getLogic().battlecries != null) {
+            System.err.println("BATTLECRY ALERT!!!");
             actions = getLogic().battlecries;
             getLogic().battlecries = null;
         } else {
