@@ -34,6 +34,7 @@ public class SimulationContext implements Cloneable
     public SimulationContext(Player player1, Player player2, GameLogic logic, DeckFormat deckFormat)
     {
         context = new GameContext(player1, player2, logic, deckFormat);
+        context.getLogic().setLoggingEnabled(false);
     }
 
     //shuffle deck and make a random hand for my opponent

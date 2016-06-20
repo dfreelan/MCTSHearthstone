@@ -35,6 +35,6 @@ public class SimpleTester
 
         new DeckFormatProxy();
 
-        Deck deck =  new HearthPwnImporter().importFrom("http://www.hearthpwn.com/decks/574146-no-battlecry");
+        Deck deck =  new HearthPwnImporter().importFrom("http://www.hearthpwn.com/decks/574146-no-battlecry-rogue");
     }
 }
