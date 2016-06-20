@@ -1,5 +1,6 @@
 package behaviors.simulation;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Stack;
@@ -24,8 +25,9 @@ public class SimulationContext implements Cloneable
     {
         context.getLogic().setLoggingEnabled(false);
         GameContext clonedContext = context.clone();
+
         clonedContext.getLogic().setLoggingEnabled(false);
-        //clonedContext.setLogic(new SimulationLogic());
+        clonedContext.setLogic(new SimulationLogic(clonedContext.getLogic()));
         //change the decks to use deterministic versions of the decks
         clonedContext.getPlayer1().setDeck(new SimulationCardCollection(clonedContext.getPlayer1().getDeck()));
         clonedContext.getPlayer2().setDeck(new SimulationCardCollection(clonedContext.getPlayer2().getDeck()));
@@ -36,6 +38,7 @@ public class SimulationContext implements Cloneable
     {
         context = new GameContext(player1, player2, logic, deckFormat);
         context.getLogic().setLoggingEnabled(false);
+        context.setLogic(new SimulationLogic(context.getLogic()));
     }
 
     //shuffle deck and make a random hand for my opponent
@@ -98,9 +101,16 @@ public class SimulationContext implements Cloneable
         cloneEntity(context,clone,Environment.KILLED_MINION,cloneMap);
         cloneEntity(context,clone,Environment.ATTACKER_REFERENCE,cloneMap);
 
-        // TODO: 6/17/16 : COMMENTED THIS TO GETIT WORKING!
-        //may need to be replaced with a stack deep clone
-        //cloneEntity(context,clone,Environment.EVENT_TARGET_REFERENCE_STACK,cloneMap);
+
+        Stack<Entity> targetStack = (Stack<Entity>) ((Stack<Entity>) context.getEnvironment().get(Environment.SUMMON_REFERENCE_STACK));
+        if (targetStack != null) {
+            targetStack = (Stack<Entity>) targetStack.clone();
+            for (int i = 0; i < targetStack.size(); i++) {
+                targetStack.set(i, (Minion) ((Minion) targetStack.get(i)).clone());
+            }
+            cloneMap.put(Environment.SUMMON_REFERENCE_STACK, targetStack);
+        }
+
         cloneEntity(context,clone,Environment.TARGET,cloneMap);
 
 
@@ -109,7 +119,6 @@ public class SimulationContext implements Cloneable
             transform = transform.clone();
             cloneMap.put(Environment.TRANSFORM_REFERENCE, transform);
         }
-
         clone.getLogic().setLoggingEnabled(false);
         return new SimulationContext(clone);
     }
@@ -142,13 +151,25 @@ public class SimulationContext implements Cloneable
 
     public List<GameAction> getValidActions()
     {
-        return context.getValidActions();
+        List<GameAction> actions = new ArrayList<GameAction>();
+        if (getLogic().battlecries != null) {
+            actions = getLogic().battlecries;
+            getLogic().battlecries = null;
+        } else {
+            actions = context.getValidActions();
+        }
+        return actions;
     }
-
+    public SimulationLogic getLogic(){
+        return (SimulationLogic)context.getLogic();
+    }
     public void applyAction(int playerID, GameAction action)
     {
+        getLogic().simulationActive = true;
+        getLogic().battlecries = null;
+        getLogic().performGameAction(context.getActivePlayerId(), action);
+        getLogic().simulationActive = false;
 
-        context.getLogic().performGameAction(context.getActivePlayerId(), action);
         if(action.getActionType() == ActionType.END_TURN){
             context.startTurn(context.getActivePlayerId());
         }
@@ -159,6 +180,25 @@ public class SimulationContext implements Cloneable
         context.playFromMiddle();
     }
 
+    public void performBattlecryAction(GameAction battlecry) {
+        boolean resolvedLate = getLogic().minion.getBattlecry().isResolvedLate();
+
+        getLogic().performGameAction(context.getActivePlayerId(), battlecry);
+        getLogic().checkForDeadEntities();
+
+        if (resolvedLate) {
+            getLogic().afterBattlecryLate();
+        } else {
+            getLogic().afterBattlecry();
+        }
+
+        getLogic().afterCardPlayed(context.getActivePlayerId(), getLogic().source.getCardReference());
+        context.getEnvironment().remove(Environment.PENDING_CARD);
+        context.getEnvironment().remove(Environment.TARGET);
+        getLogic().minion = null;
+        getLogic().resolveBattlecry = false;
+
+    }
     public void play() { context.play(); }
 
     @Override
