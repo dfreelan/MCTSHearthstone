@@ -30,7 +30,7 @@ public class MetastoneTester
 
         int simulations = 1;
         String deckName = "nobattlecry";
-        int numTrees = 20;
+        int numTrees = 1;//20;
         int numIterations = 10000;
         double exploreFactor = 1.4;
         boolean parallel = true;
@@ -127,6 +127,7 @@ public class MetastoneTester
         for(CardSet set : CardSet.values()) {
             allCards.addSet(set);
         }
+
 
         SimulationContext game = new SimulationContext(p1, p2, new GameLogic(), allCards);
 
