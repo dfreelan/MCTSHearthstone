@@ -80,7 +80,37 @@ public class SimulationContext implements Cloneable
     @Override
     public SimulationContext clone()
     {
-        return new SimulationContext(context.clone());
+        GameContext clone = this.context.clone();
+
+
+        HashMap cloneMap = (HashMap)clone.getEnvironment();
+
+        Stack<EntityReference> newStack = (Stack<EntityReference>) ((Stack<EntityReference>) context.getEnvironment().get(Environment.SUMMON_REFERENCE_STACK));
+        if (newStack != null) {
+           newStack = (Stack<EntityReference>) newStack.clone();
+            for (int i = 0; i < newStack.size(); i++) {
+                    newStack.set(i, (EntityReference) ((EntityReference) newStack.get(i)));
+                }
+            cloneMap.remove(Environment.SUMMON_REFERENCE_STACK);
+           cloneMap.put(Environment.SUMMON_REFERENCE_STACK, newStack);
+        }
+        
+        newStack = (Stack<EntityReference>) ((Stack<EntityReference>) context.getEnvironment().get(Environment.EVENT_TARGET_REFERENCE_STACK));
+        if (newStack != null) {
+            newStack = (Stack<EntityReference>) newStack.clone();
+            for (int i = 0; i < newStack.size(); i++) {
+                newStack.set(i, (EntityReference) ((EntityReference) newStack.get(i)));
+            }
+            cloneMap.remove(Environment.EVENT_TARGET_REFERENCE_STACK);
+            cloneMap.put(Environment.EVENT_TARGET_REFERENCE_STACK, newStack);
+        }
+
+
+
+        clone.getLogic().setLoggingEnabled(false);
+
+
+        return new SimulationContext(clone);
     }
 
     public boolean gameDecided()
