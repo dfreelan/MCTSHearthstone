@@ -22,6 +22,7 @@ public class SimulationContext implements Cloneable
 
     public SimulationContext(GameContext context)
     {
+        context.getLogic().setLoggingEnabled(false);
         GameContext clonedContext = context.clone();
         clonedContext.getLogic().setLoggingEnabled(false);
         //clonedContext.setLogic(new SimulationLogic());

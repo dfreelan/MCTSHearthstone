@@ -128,7 +128,6 @@ public class MetastoneTester
             allCards.addSet(set);
         }
 
-
         SimulationContext game = new SimulationContext(p1, p2, new GameLogic(), allCards);
 
         if(parallel) {
