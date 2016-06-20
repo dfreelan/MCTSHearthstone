@@ -27,10 +27,11 @@ public class MetastoneTester
     {
         long beginTime = System.nanoTime();
         stats = new double[5];
+
         boolean parallel = true;
         int simulations = 1;
 
-        String deckName = "nobattlecryrogue";
+        String deckName = "nobattlecryhunter";
         int numTrees = 20;
         int numIterations = 10000;
         double exploreFactor = 1.4;
@@ -116,14 +117,16 @@ public class MetastoneTester
         IBehaviour behavior1 = new MCTSBehavior(exploreFactor, numTrees, numIterations, new PlayRandomBehaviour());
         PlayerConfig p1Config = new PlayerConfig(deck1, behavior1);
 
-        Deck deck2 = loadDeck(deckName);
+        Deck deck2 = loadDeck(deckName2);
         PlayerConfig p2Config = new PlayerConfig(deck2, behavior2);
 
         p1Config.build();
         p2Config.build();
 
         p1Config.setHeroCard(MetaHero.getHeroCard(deck1.getHeroClass()));
+        p1Config.setName(behavior1.getName());
         p2Config.setHeroCard(MetaHero.getHeroCard(deck2.getHeroClass()));
+        p2Config.setName(behavior2.getName());
 
         Player p1 = new Player(p1Config);
         Player p2 = new Player(p2Config);
@@ -168,8 +171,8 @@ public class MetastoneTester
     {
         String url = null;
         switch (name.toLowerCase()) {
-            case "nobattlecryrogue":
-                url = "http://www.hearthpwn.com/decks/574146-no-battlecry-rogue";
+            case "nobattlecryhunter":
+                url = "http://www.hearthpwn.com/decks/574146-no-battlecry-hunter";
                 break;
             case "controlwarrior":
                 url = "http://www.hearthpwn.com/decks/81605-breebotjr-control-warrior";
