@@ -34,6 +34,7 @@ public class SimulationLogic extends GameLogic {
 
     public SimulationLogic(GameLogic parent) {
         super(parent.getIdFactory());
+        super.setLoggingEnabled(false);
         this.setContext((parent.getGameContext()));
     }
 
