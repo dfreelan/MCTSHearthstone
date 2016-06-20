@@ -181,7 +181,7 @@ public class SimulationContext implements Cloneable
     }
 
     public void performBattlecryAction(GameAction battlecry) {
-       
+
 
         boolean resolvedLate = getLogic().minion.getBattlecry().isResolvedLate();
 
