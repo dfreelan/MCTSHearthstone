@@ -94,7 +94,7 @@ public class SimulationContext implements Cloneable
             cloneMap.remove(Environment.SUMMON_REFERENCE_STACK);
            cloneMap.put(Environment.SUMMON_REFERENCE_STACK, newStack);
         }
-        
+
         newStack = (Stack<EntityReference>) ((Stack<EntityReference>) context.getEnvironment().get(Environment.EVENT_TARGET_REFERENCE_STACK));
         if (newStack != null) {
             newStack = (Stack<EntityReference>) newStack.clone();

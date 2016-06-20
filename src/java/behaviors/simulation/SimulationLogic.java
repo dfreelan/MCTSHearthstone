@@ -47,26 +47,23 @@ public class SimulationLogic extends GameLogic {
 
     public void afterBattlecry() {
         Player player = this.getGameContext().getPlayer(playerId);
-        if (this.getGameContext().getEnvironment().get(Environment.TRANSFORM_REFERENCE) != null) {
-            minion = (Minion) this.getGameContext().getEnvironment().get(Environment.TRANSFORM_REFERENCE);
+
+
+
+        if (getGameContext().getEnvironment().get(Environment.TRANSFORM_REFERENCE) != null) {
+            minion = (Minion) getGameContext().resolveSingleTarget((EntityReference) getGameContext().getEnvironment().get(Environment.TRANSFORM_REFERENCE));
             minion.setBattlecry(null);
-            this.getGameContext().getEnvironment().remove(Environment.TRANSFORM_REFERENCE);
+            getGameContext().getEnvironment().remove(Environment.TRANSFORM_REFERENCE);
         }
 
-        if (index < 0 || index >= player.getMinions().size()) {
-            player.getMinions().add(minion);
-        } else {
-            player.getMinions().add(index, minion);
-        }
+        getGameContext().fireGameEvent(new BoardChangedEvent(getGameContext()));
 
-        SummonEvent summonEvent = new SummonEvent(this.getGameContext(), minion, source);
-        this.getGameContext().fireGameEvent((GameEvent) summonEvent);
+        player.getStatistics().minionSummoned(minion);
+        SummonEvent summonEvent = new SummonEvent(getGameContext(), minion, source);
+        getGameContext().fireGameEvent(summonEvent);
 
         applyAttribute(minion, Attribute.SUMMONING_SICKNESS);
         refreshAttacksPerRound(minion);
-        if (player.getHero().hasAttribute(Attribute.CANNOT_REDUCE_HP_BELOW_1)) {
-            minion.setAttribute(Attribute.CANNOT_REDUCE_HP_BELOW_1);
-        }
 
         if (minion.hasSpellTrigger()) {
             addGameEventListener(player, minion.getSpellTrigger(), minion);
@@ -76,9 +73,6 @@ public class SimulationLogic extends GameLogic {
             addManaModifier(player, minion.getCardCostModifier(), minion);
         }
 
-        if (resolveBattlecry && minion.getBattlecry() != null && minion.getBattlecry().isResolvedLate()) {
-            resolveBattlecry(player.getId(), minion);
-        }
 
         handleEnrage(minion);
 
