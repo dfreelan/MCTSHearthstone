@@ -69,31 +69,31 @@ public class MCTSBehavior extends Behaviour
     }
 
     @Override
-    public GameAction requestAction(GameContext gameContext, Player player, List<GameAction> list)
+    public GameAction requestAction(GameContext gameContext, Player player, List<GameAction> validActions)
     {
-        if(list.size() == 1) {
-            return list.get(0);
+        if(validActions.size() == 1) {
+            return validActions.get(0);
         }
 
         MCTSTree[] trees = new MCTSTree[numTrees];
         double[][] accumulateStats = new double[numTrees][];
 
         for(int i = 0; i < numTrees; i++) {
-            MCTSNode root = new MCTSNode(new SimulationContext(gameContext), null, list);
+            MCTSNode root = new MCTSNode(new SimulationContext(gameContext), null, validActions);
             root.getContext().setBehavior(rolloutBehavior);
             root.getContext().randomize(player.getId());
 
             trees[i] = new MCTSTree(exploreFactor, root, actionPrune);
 
-            accumulateStats[i] = new double[list.size()];
+            accumulateStats[i] = new double[validActions.size()];
             for(int j = 0; j < accumulateStats[i].length; j++) {
                 accumulateStats[i][j] = -1;
             }
         }
 
         Map<Integer, Integer> hashToIndex = new HashMap<>();
-        for(int i = 0; i < list.size(); i++) {
-            hashToIndex.put(actionHash(list.get(i)), i);
+        for(int i = 0; i < validActions.size(); i++) {
+            hashToIndex.put(actionHash(validActions.get(i)), i);
         }
 
         IntStream.range(0, numTrees).parallel().forEach((int i) -> runForest(trees, accumulateStats, hashToIndex, i));
@@ -107,7 +107,7 @@ public class MCTSBehavior extends Behaviour
             }
         }
 
-        return list.get(maxIndex);
+        return validActions.get(maxIndex);
     }
 
     private void runForest(MCTSTree[] trees, double[][] accumulateStats, Map<Integer, Integer> actionHashToIndex, int treeIndex)

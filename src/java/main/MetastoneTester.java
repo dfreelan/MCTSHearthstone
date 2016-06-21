@@ -2,6 +2,7 @@ package main;
 
 import java.util.stream.IntStream;
 
+import behaviors.heuristic.HeuristicBehavior;
 import net.demilich.metastone.game.Player;
 import net.demilich.metastone.game.behaviour.IBehaviour;
 import net.demilich.metastone.game.behaviour.PlayRandomBehaviour;
@@ -35,6 +36,7 @@ public class MetastoneTester
         int numTrees = 20;
         int numIterations = 10000;
         double exploreFactor = 1.4;
+        IBehaviour behavior = null;
 
         String deckName2 = deckName;
         int numTrees2 = numTrees;
@@ -78,14 +80,9 @@ public class MetastoneTester
             exploreFactor = Integer.parseInt(argumentForKey("-explore", args));
             exploreFactor2 = exploreFactor;
         }
-        if(keyExists("-behavior2", args)) {
-            String behavior2Arg = argumentForKey("-behavior2", args);
-            switch(behavior2Arg.toLowerCase()) {
-                case "random": break;
-                case "gamestate": behavior2 = new GameStateValueBehaviour(); break;
-                case "mcts": behavior2 = null; break;
-                default: throw new RuntimeException("Error: " + behavior2Arg + " behavior does not exist.");
-            }
+        if(keyExists("-behavior", args)) {
+            String behaviorArg = argumentForKey("-behavior", args);
+            behavior = getBehavior(behaviorArg, exploreFactor, numTrees, numIterations);
         }
         if(keyExists("-deck2", args)) {
             deckName2 = argumentForKey("-deck2", args);
@@ -105,9 +102,9 @@ public class MetastoneTester
         if(keyExists("-explore2", args)) {
             exploreFactor2 = Integer.parseInt(argumentForKey("-explore2", args));
         }
-
-        if(behavior2 == null) {
-            behavior2 = new MCTSBehavior(exploreFactor2, numTrees2, numIterations2, new PlayRandomBehaviour());
+        if(keyExists("-behavior2", args)) {
+            String behavior2Arg = argumentForKey("-behavior2", args);
+            behavior2 = getBehavior(behavior2Arg, exploreFactor2, numTrees2, numIterations2);
         }
 
         new CardProxy();
@@ -118,8 +115,10 @@ public class MetastoneTester
         new DeckFormatProxy();
 
         Deck deck1 = loadDeck(deckName);
-        IBehaviour behavior1 = new MCTSBehavior(exploreFactor, numTrees, numIterations, new PlayRandomBehaviour());
-        PlayerConfig p1Config = new PlayerConfig(deck1, behavior1);
+        if(behavior == null) {
+            behavior = new MCTSBehavior(exploreFactor, numTrees, numIterations, new PlayRandomBehaviour());
+        }
+        PlayerConfig p1Config = new PlayerConfig(deck1, behavior);
 
         Deck deck2 = loadDeck(deckName2);
         PlayerConfig p2Config = new PlayerConfig(deck2, behavior2);
@@ -128,7 +127,7 @@ public class MetastoneTester
         p2Config.build();
 
         p1Config.setHeroCard(MetaHero.getHeroCard(deck1.getHeroClass()));
-        p1Config.setName(behavior1.getName());
+        p1Config.setName(behavior.getName());
         p2Config.setHeroCard(MetaHero.getHeroCard(deck2.getHeroClass()));
         p2Config.setName(behavior2.getName());
 
@@ -148,8 +147,8 @@ public class MetastoneTester
             IntStream.range(0, simulations).sequential().forEach((int i) -> runSimulation(game.clone()));
         }
 
-        stats[3] = Math.round((System.nanoTime() - beginTime) / 1e9);
-        stats[4] = Math.round(stats[3] / simulations);
+        stats[3] = (System.nanoTime() - beginTime) / 1e9;
+        stats[4] = stats[3] / simulations;
 
         System.out.println("Wins: " + stats[1]);
         System.out.println("Losses: " + stats[2]);
@@ -169,6 +168,21 @@ public class MetastoneTester
     private static synchronized void updateStats(int result)
     {
         stats[result + 1]++;
+    }
+
+    private static IBehaviour getBehavior(String name, double exploreFactor, int numTrees, int numIterations)
+    {
+        switch(name.toLowerCase()) {
+            case "random": return new PlayRandomBehaviour();
+            case "heuristic": return new HeuristicBehavior();
+            case "gamestate": return new GameStateValueBehaviour();
+            case "mcts": return new MCTSBehavior(exploreFactor, numTrees, numIterations, new PlayRandomBehaviour());
+            case "mctsheuristic":
+                MCTSBehavior behavior = new MCTSBehavior(exploreFactor, numTrees, numIterations, new HeuristicBehavior());
+                behavior.setName("MCTSHeuristicBehavior");
+                return behavior;
+            default: throw new RuntimeException("Error: " + name + " behavior does not exist.");
+        }
     }
 
     private static Deck loadDeck(String name)

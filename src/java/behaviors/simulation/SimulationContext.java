@@ -84,6 +84,8 @@ public class SimulationContext implements Cloneable
     {
         GameContext clone = this.context.clone();
         clone.setLogic(getLogic().clone());
+        clone.getPlayer1().setBehaviour(clone.getPlayer1().getBehaviour().clone());
+        clone.getPlayer2().setBehaviour(clone.getPlayer2().getBehaviour().clone());
 
         HashMap cloneMap = (HashMap)clone.getEnvironment();
 
