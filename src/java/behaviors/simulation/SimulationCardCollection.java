@@ -5,7 +5,8 @@ import net.demilich.metastone.game.cards.CardCollection;
 import net.demilich.metastone.game.decks.Deck;
 import net.demilich.metastone.game.actions.GameAction;
 
-public class SimulationCardCollection extends CardCollection{
+public class SimulationCardCollection extends CardCollection
+{
     private boolean shuffled = true;
 
     public SimulationCardCollection(CardCollection cards)

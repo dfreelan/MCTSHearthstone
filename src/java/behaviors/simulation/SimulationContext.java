@@ -97,6 +97,8 @@ public class SimulationContext implements Cloneable
     {
         GameContext clone = deepCloneContext();
         clone.setLogic(getLogic().clone());
+        clone.getPlayer1().setBehaviour(clone.getPlayer1().getBehaviour().clone());
+        clone.getPlayer2().setBehaviour(clone.getPlayer2().getBehaviour().clone());
         clone.getLogic().setLoggingEnabled(false);
         return new SimulationContext(clone);
     }
@@ -176,7 +178,7 @@ public class SimulationContext implements Cloneable
 
         if(action.getActionType() == ActionType.BATTLECRY){
             performBattlecryAction(action);
-            //System.err.println("BATTLECRY IS HAPPENING IN SIMULATION");
+
         }else {
             getLogic().simulationActive = true;
             getLogic().performGameAction(context.getActivePlayerId(), action);
