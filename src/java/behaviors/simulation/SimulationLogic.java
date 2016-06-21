@@ -150,7 +150,6 @@ public boolean summon(int playerId, Minion minion, Card source, int index, boole
             getGameContext().setIsInBattleCry(true);
             resolveBattlecry(player.getId(), minion);
             if (this.battlecryRequest) {
-
                 return true;
             }
         }

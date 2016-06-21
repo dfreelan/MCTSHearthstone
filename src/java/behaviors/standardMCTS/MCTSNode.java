@@ -8,6 +8,7 @@ import java.util.Random;
 import net.demilich.metastone.game.actions.ActionType;
 import net.demilich.metastone.game.actions.GameAction;
 
+
 import behaviors.simulation.SimulationContext;
 import behaviors.util.IFilter;
 import behaviors.util.ActionValuePair;
@@ -78,8 +79,8 @@ public class MCTSNode
     {
         SimulationContext simulation = node.context.clone();
 
-        GameAction randAction = validActions.get(rand.nextInt(validActions.size()));
-        simulation.applyAction(simulation.getActivePlayerId(), randAction);
+        //GameAction randAction = validActions.get(rand.nextInt(validActions.size()));
+        //simulation.applyAction(simulation.getActivePlayerId(), randAction);
 
         simulation.playFromMiddle();
         return 1 - simulation.getWinningPlayerId();
