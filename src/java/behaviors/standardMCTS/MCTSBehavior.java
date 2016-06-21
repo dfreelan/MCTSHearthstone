@@ -109,7 +109,7 @@ public class MCTSBehavior extends Behaviour
         }
 
 
-        previousAction = list.get(maxIndex);
+        previousAction = validActions.get(maxIndex);
         return previousAction;
     }
 
