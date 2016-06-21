@@ -27,7 +27,7 @@ public class MCTSBehavior extends Behaviour
     private IBehaviour rolloutBehavior;
     private IArrayCompressor<double[]> statCompressor;
     private IFilter actionPrune;
-
+    private GameAction previousAction = null;
     private String name = "MCTSBehavior";
 
     public MCTSBehavior(double exploreFactor, int numTrees, int numIterations, IBehaviour rolloutBehavior)
@@ -79,7 +79,7 @@ public class MCTSBehavior extends Behaviour
         double[][] accumulateStats = new double[numTrees][];
 
         for(int i = 0; i < numTrees; i++) {
-            MCTSNode root = new MCTSNode(new SimulationContext(gameContext), null, list);
+            MCTSNode root = new MCTSNode(new SimulationContext(gameContext,previousAction), null, list);
             root.getContext().setBehavior(rolloutBehavior);
             root.getContext().randomize(player.getId());
 
@@ -106,8 +106,8 @@ public class MCTSBehavior extends Behaviour
                 maxIndex = i;
             }
         }
-
-        return list.get(maxIndex);
+        previousAction = list.get(maxIndex);
+        return previousAction;
     }
 
     private void runForest(MCTSTree[] trees, double[][] accumulateStats, Map<Integer, Integer> actionHashToIndex, int treeIndex)
