@@ -1,0 +1,48 @@
+apply plugin: 'idea'
+apply plugin: 'java'
+apply plugin: 'eclipse'
+configurations {
+   provided
+}
+
+dependencies{
+    provided "org.deeplearning4j:deeplearning4j-core:0.4-rc3.9"
+}
+sourceSets {
+    main {
+        compileClasspath += configurations.provided 
+    }
+}
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+
+sourceSets {
+    main {
+        compileClasspath += configurations.provided
+	    java {
+            srcDir 'src/java'
+        } 
+    }
+}
+
+
+dependencies{
+    provided "org.deeplearning4j:deeplearning4j-core:0.4-rc3.10"
+    compile 'org.deeplearning4j:deeplearning4j-core:0.4-rc3.10'
+    compile 'org.deeplearning4j:deeplearning4j-cli:0.4-rc3.10'
+    compile 'org.deeplearning4j:deeplearning4j-ui:0.4-rc3.10'
+    compile 'org.deeplearning4j:deeplearning4j-nlp:0.4-rc3.10'
+    compile 'org.nd4j:nd4j-native:0.4-rc3.10'
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        os = 'windows-x86_64'
+    }else if(Os.isFamily(Os.FAMILY_MAC)){
+        os = 'macosx-x86_64'
+    }
+    else {
+        os = 'linux-x86_64'
+    }
+    compile 'org.nd4j:nd4j-native:0.4-rc3.10:' + os
+}
