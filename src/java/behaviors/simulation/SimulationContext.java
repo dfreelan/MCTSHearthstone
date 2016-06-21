@@ -117,6 +117,8 @@ public class SimulationContext implements Cloneable
         return new SimulationContext(clone);
     }
 
+    public GameContext getGameContext() { return context; }
+
     public boolean gameDecided()
     {
         return context.gameDecided();
