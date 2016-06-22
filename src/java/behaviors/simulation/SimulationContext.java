@@ -27,24 +27,26 @@ public class SimulationContext implements Cloneable
     {
         context.getLogic().setLoggingEnabled(false);
         GameContext clonedContext = deepCloneContext(context);
+        this.context = clonedContext;
 
         clonedContext.getLogic().setLoggingEnabled(false);
         if(! (context.getLogic() instanceof SimulationLogic)) {
             clonedContext.setLogic(new SimulationLogic(clonedContext.getLogic()));
 
+            if(!context.getSummonReferenceStack().isEmpty() && context.getSummonReferenceStack().peek() !=null){
+                getLogic().minion = (Minion)context.resolveSingleTarget(context.getSummonReferenceStack().peek());
+                getLogic().source = getLogic().minion.getSourceCard();//(Card)context.resolveCardReference(((PlayCardAction)previousAction).getCardReference());
+            }
+
             //change the decks to use deterministic versions of the decks
             clonedContext.getPlayer1().setDeck(new SimulationCardCollection(clonedContext.getPlayer1().getDeck()));
             clonedContext.getPlayer2().setDeck(new SimulationCardCollection(clonedContext.getPlayer2().getDeck()));
+
+
         }
-        this.context = clonedContext;
+
    }
-    public SimulationContext(GameContext context, GameAction previousAction) {
-        this(context);
-        if(!context.getSummonReferenceStack().isEmpty() && context.getSummonReferenceStack().peek() !=null){
-            getLogic().minion = (Minion)context.resolveSingleTarget(context.getSummonReferenceStack().peek());
-            getLogic().source = getLogic().minion.getSourceCard();//(Card)context.resolveCardReference(((PlayCardAction)previousAction).getCardReference());
-        }
-    }
+
 
     public SimulationContext(Player player1, Player player2, GameLogic logic, DeckFormat deckFormat)
     {
