@@ -53,7 +53,7 @@ public class SimulationLogic extends GameLogic {
 
         if (getGameContext().getEnvironment().get(Environment.TRANSFORM_REFERENCE) != null) {
             minion = (Minion) getGameContext().resolveSingleTarget((EntityReference) getGameContext().getEnvironment().get(Environment.TRANSFORM_REFERENCE));
-            minion.setBattlecry(null);
+            //minion.setBattlecry(null);
             getGameContext().getEnvironment().remove(Environment.TRANSFORM_REFERENCE);
         }
 
