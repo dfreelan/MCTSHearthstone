@@ -27,6 +27,7 @@ public class SimulationContext implements Cloneable
     {
         context.getLogic().setLoggingEnabled(false);
         GameContext clonedContext = deepCloneContext(context);
+        GameContext origContext = context;
         this.context = clonedContext;
 
         getLogic().setLoggingEnabled(false);
@@ -42,6 +43,10 @@ public class SimulationContext implements Cloneable
             //System.err.println("doin battlecrysetup");
             getLogic().minion = (Minion)context.resolveSingleTarget(context.getSummonReferenceStack().peek());
             getLogic().source = getLogic().minion.getSourceCard();//(Card)context.resolveCardReference(((PlayCardAction)previousAction).getCardReference());
+            if(origContext.getLogic() instanceof SimulationLogic){
+                SimulationLogic origLogic = (SimulationLogic)origContext.getLogic();
+                getLogic().battlecries = origLogic.battlecries;
+            }
         }
    }
 
@@ -213,8 +218,8 @@ public class SimulationContext implements Cloneable
 
         getLogic().afterCardPlayed(context.getActivePlayerId(), getLogic().source.getCardReference());
         context.setPendingCard(null);
-        context.getEnvironment().remove(Environment.PENDING_CARD);
-        context.getEnvironment().remove(Environment.TARGET);
+   //     context.getEnvironment().remove(Environment.PENDING_CARD);
+   //     context.getEnvironment().remove(Environment.TARGET);
         getLogic().minion = null;
         getLogic().resolveBattlecry = false;
         getLogic().battlecries = null;
