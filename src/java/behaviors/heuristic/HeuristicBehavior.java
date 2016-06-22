@@ -75,6 +75,11 @@ public class HeuristicBehavior extends Behaviour
         List<TreeMap<GameAction, List<GameAction>>> nonemptyCategories = new ArrayList<>();
 
         for (GameAction action : validActions) {
+            if(action==null){
+                System.err.println("I was supplied a null action! don't do that!");
+                throw new RuntimeException("was supplied a null action in heuristic behavior");
+            }
+            //check source to check for battlecry
             Actor source = (Actor) gameContext.resolveSingleTarget(action.getSource());
             TreeMap<GameAction, List<GameAction>> category = null;
             if (action.getActionType().equals(ActionType.PHYSICAL_ATTACK)) {
@@ -83,11 +88,12 @@ public class HeuristicBehavior extends Behaviour
                 } else if (!onBlacklist(action, minionBlacklist)) {
                     category = minionAttacks;
                 }
-                //source being null should indicate that the action is not a battlecry
+                //vv  source being null should indicate that the action is not a battlecry vv
             } else if (action.getActionType().equals(ActionType.SUMMON) && source == null) {
                 if (!onBlacklist(action, summonBlacklist)) {
                     category = summons;
                 }
+                //vv  everything else, battlecry, spells, hero power,discover,equip weapon,  etc but not system and end_turn, each  vv
             } else if (!action.getActionType().equals(ActionType.SYSTEM) && !action.getActionType().equals(ActionType.END_TURN)) {
                 if (!onBlacklist(action, spellBlacklist)) {
                     category = spells;
@@ -102,7 +108,7 @@ public class HeuristicBehavior extends Behaviour
                 addAction(action, category);
             }
         }
-
+        //select an action. Will check/add things to the blacklist
         while (!nonemptyCategories.isEmpty()) {
             TreeMap<GameAction, List<GameAction>> category = nonemptyCategories.get(rand.nextInt(nonemptyCategories.size()));
             int actionGroupIndex = rand.nextInt(category.size());
