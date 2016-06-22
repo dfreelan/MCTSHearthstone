@@ -172,7 +172,7 @@ public class SimulationContext implements Cloneable
     }
     public void applyAction(int playerID, GameAction action)
     {
-       if(action!=null){
+       if(action==null){
            System.err.println("ACTION WAS NULL");
            throw new RuntimeException("action cannot be null");
        }

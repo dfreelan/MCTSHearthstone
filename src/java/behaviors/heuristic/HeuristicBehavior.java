@@ -129,6 +129,9 @@ public class HeuristicBehavior extends Behaviour
                 boolean chooseAction = true;
                 if(category == spells) {
                     SimulationContext simulation = new SimulationContext(gameContext);
+                    if(action == null) {
+                        throw new RuntimeException("action null before applyaction");
+                    }
                     simulation.applyAction(player.getId(), action);
                     double currentScore = heuristic.getScore(gameContext, player.getId());
                     double afterScore = heuristic.getScore(simulation.getGameContext(), player.getId());
