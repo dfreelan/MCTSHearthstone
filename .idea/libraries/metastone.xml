@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="metastone">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../metastone/build/classes/artifacts/metastone_jar/metastone.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

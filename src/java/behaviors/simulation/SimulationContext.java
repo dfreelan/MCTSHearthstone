@@ -40,13 +40,9 @@ public class SimulationContext implements Cloneable
    }
     public SimulationContext(GameContext context, GameAction previousAction) {
         this(context);
-        System.err.println("mylast turn action was: " + previousAction);
         if(!context.getSummonReferenceStack().isEmpty() && context.getSummonReferenceStack().peek() !=null){
-            System.err.println("this minion i battlecried with last turn: " + context.getSummonReferenceStack().peek());
             getLogic().minion = (Minion)context.resolveSingleTarget(context.getSummonReferenceStack().peek());
-
             getLogic().source = getLogic().minion.getSourceCard();//(Card)context.resolveCardReference(((PlayCardAction)previousAction).getCardReference());
-            System.err.println("did i actually find him? " + getLogic().minion);
         }
     }
 
@@ -224,7 +220,6 @@ public class SimulationContext implements Cloneable
 
     @Override
     public String toString(){
-        System.err.println("SIMULATION CONTEXT:");
-        return context.toString();
+        return "Simulation Context: " + context.toString();
     }
 }

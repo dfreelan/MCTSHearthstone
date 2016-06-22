@@ -36,13 +36,5 @@ dependencies{
     compile 'org.deeplearning4j:deeplearning4j-ui:0.4-rc3.10'
     compile 'org.deeplearning4j:deeplearning4j-nlp:0.4-rc3.10'
     compile 'org.nd4j:nd4j-native:0.4-rc3.10'
-    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-        os = 'windows-x86_64'
-    }else if(Os.isFamily(Os.FAMILY_MAC)){
-        os = 'macosx-x86_64'
-    }
-    else {
-        os = 'linux-x86_64'
-    }
-    compile 'org.nd4j:nd4j-native:0.4-rc3.10:' + os
+    compile 'org.nd4j:nd4j-native:0.4-rc3.10:windows-x86_64'
 }
