@@ -128,7 +128,6 @@ public class HeuristicBehavior extends Behaviour
                     double afterScore = heuristic.getScore(simulation.getGameContext(), player.getId());
                     chooseAction = afterScore > currentScore;
                 }
-
                 if(chooseAction) {
                     return action;
                 }
