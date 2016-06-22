@@ -188,7 +188,7 @@ public class HeuristicBehavior extends Behaviour
                 return action;
             }
         }
-        return null;
+        throw new RuntimeException("Error: END_TURN action not found");
     }
 
     private boolean onBlacklist(GameAction action, List<GameAction> blacklist)
