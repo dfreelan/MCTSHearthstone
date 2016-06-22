@@ -19,7 +19,7 @@ import net.demilich.metastone.gui.deckbuilder.DeckProxy;
 import net.demilich.metastone.gui.deckbuilder.importer.HearthPwnImporter;
 
 import behaviors.simulation.SimulationContext;
-import behaviors.standardMCTS.MCTSBehavior;
+import behaviors.MCTS.MCTSBehavior;
 
 public class MetastoneTester
 {

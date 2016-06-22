@@ -36,5 +36,5 @@ dependencies{
     compile 'org.deeplearning4j:deeplearning4j-ui:0.4-rc3.10'
     compile 'org.deeplearning4j:deeplearning4j-nlp:0.4-rc3.10'
     compile 'org.nd4j:nd4j-native:0.4-rc3.10'
-    compile 'org.nd4j:nd4j-native:0.4-rc3.10:windows-x86_64'
+    compile 'org.nd4j:nd4j-native:0.4-rc3.10:macosx-x86_64'
 }
