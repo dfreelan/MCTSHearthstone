@@ -30,13 +30,13 @@ public class SimulationContext implements Cloneable
         this.context = clonedContext;
 
         clonedContext.getLogic().setLoggingEnabled(false);
-        if(! (context.getLogic() instanceof SimulationLogic)) {
-            clonedContext.setLogic(new SimulationLogic(clonedContext.getLogic()));
-
+        if(!(context.getLogic() instanceof SimulationLogic)) {
             if(!context.getSummonReferenceStack().isEmpty() && context.getSummonReferenceStack().peek() !=null){
                 getLogic().minion = (Minion)context.resolveSingleTarget(context.getSummonReferenceStack().peek());
                 getLogic().source = getLogic().minion.getSourceCard();//(Card)context.resolveCardReference(((PlayCardAction)previousAction).getCardReference());
             }
+
+            clonedContext.setLogic(new SimulationLogic(clonedContext.getLogic()));
 
             //change the decks to use deterministic versions of the decks
             clonedContext.getPlayer1().setDeck(new SimulationCardCollection(clonedContext.getPlayer1().getDeck()));
@@ -50,6 +50,7 @@ public class SimulationContext implements Cloneable
 
     public SimulationContext(Player player1, Player player2, GameLogic logic, DeckFormat deckFormat)
     {
+
         context = new GameContext(player1, player2, logic, deckFormat);
         context.getLogic().setLoggingEnabled(false);
         context.setLogic(new SimulationLogic(context.getLogic()));
@@ -174,7 +175,7 @@ public class SimulationContext implements Cloneable
     }
     public void applyAction(int playerID, GameAction action)
     {
-       if(action!=null){
+       if(action==null){
            System.err.println("ACTION WAS NULL");
            throw new RuntimeException("action cannot be null");
        }
