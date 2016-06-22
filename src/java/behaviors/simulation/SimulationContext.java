@@ -31,12 +31,14 @@ public class SimulationContext implements Cloneable
 
         clonedContext.getLogic().setLoggingEnabled(false);
         if(!(context.getLogic() instanceof SimulationLogic)) {
+
+
+            clonedContext.setLogic(new SimulationLogic(clonedContext.getLogic()));
+
             if(!context.getSummonReferenceStack().isEmpty() && context.getSummonReferenceStack().peek() !=null){
                 getLogic().minion = (Minion)context.resolveSingleTarget(context.getSummonReferenceStack().peek());
                 getLogic().source = getLogic().minion.getSourceCard();//(Card)context.resolveCardReference(((PlayCardAction)previousAction).getCardReference());
             }
-
-            clonedContext.setLogic(new SimulationLogic(clonedContext.getLogic()));
 
             //change the decks to use deterministic versions of the decks
             clonedContext.getPlayer1().setDeck(new SimulationCardCollection(clonedContext.getPlayer1().getDeck()));
