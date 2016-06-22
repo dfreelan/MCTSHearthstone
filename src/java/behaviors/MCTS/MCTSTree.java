@@ -1,19 +1,19 @@
-package behaviors.standardMCTS;
+package behaviors.MCTS;
 
 import java.util.List;
 
+import behaviors.standardMCTS.MCTSStandardNode;
 import behaviors.util.IFilter;
-import net.demilich.metastone.game.behaviour.IBehaviour;
 
 import behaviors.util.ActionValuePair;
 
 public class MCTSTree
 {
     double exploreFactor;
-    MCTSNode root;
+    MCTSStandardNode root;
     IFilter actionPrune;
 
-    public MCTSTree(double exploreFactor, MCTSNode root, IFilter actionPrune)
+    public MCTSTree(double exploreFactor, MCTSStandardNode root, IFilter actionPrune)
     {
         this.exploreFactor = exploreFactor;
         this.root = root;
@@ -28,5 +28,5 @@ public class MCTSTree
         return root.getChildValues(root.getContext().getActivePlayerId());
     }
 
-    public MCTSNode getRoot() { return root; }
+    public MCTSStandardNode getRoot() { return root; }
 }

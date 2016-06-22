@@ -1,4 +1,4 @@
-package behaviors.standardMCTS;
+package behaviors.MCTS;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import behaviors.standardMCTS.MCTSStandardNode;
 import net.demilich.metastone.game.GameContext;
 import net.demilich.metastone.game.Player;
 import net.demilich.metastone.game.actions.ActionType;
@@ -80,7 +81,7 @@ public class MCTSBehavior extends Behaviour
 
         for(int i = 0; i < numTrees; i++) {
 
-            MCTSNode root = new MCTSNode(new SimulationContext(gameContext,previousAction), null, validActions);
+            MCTSStandardNode root = new MCTSStandardNode(new SimulationContext(gameContext,previousAction), null, validActions);
             root.getContext().setBehavior(rolloutBehavior);
             root.getContext().randomize(player.getId());
 
@@ -117,7 +118,7 @@ public class MCTSBehavior extends Behaviour
     {
         trees[treeIndex].run(numIterations / numTrees);
 
-        MCTSNode root = trees[treeIndex].getRoot();
+        MCTSStandardNode root = trees[treeIndex].getRoot();
         List<ActionValuePair> actionValues = root.getChildValues(root.getContext().getActivePlayerId());
         for(ActionValuePair actionValue : actionValues) {
             int actionIndex = actionHashToIndex.get(actionHash(actionValue.action));

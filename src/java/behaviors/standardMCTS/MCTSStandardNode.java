@@ -5,7 +5,7 @@ import java.util.LinkedList;
 import java.util.ArrayList;
 import java.util.Random;
 
-import net.demilich.metastone.game.actions.ActionType;
+import behaviors.MCTS.MCTSNode;
 import net.demilich.metastone.game.actions.GameAction;
 
 
@@ -13,7 +13,7 @@ import behaviors.simulation.SimulationContext;
 import behaviors.util.IFilter;
 import behaviors.util.ActionValuePair;
 
-public class MCTSNode
+public class MCTSStandardNode implements MCTSNode
 {
     private List<GameAction> rootActions;
 
@@ -21,18 +21,18 @@ public class MCTSNode
     private double numVisits;
     private SimulationContext context;
     private GameAction action;
-    private List<MCTSNode> children;
+    private List<MCTSStandardNode> children;
 
     private Random rand;
     private final double epsilon = 1e-6;
 
-    public MCTSNode(SimulationContext current, GameAction action, List<GameAction> rootActions)
+    public MCTSStandardNode(SimulationContext current, GameAction action, List<GameAction> rootActions)
     {
         this(current, action);
         this.rootActions = rootActions;
     }
 
-    public MCTSNode(SimulationContext current, GameAction action)
+    public MCTSStandardNode(SimulationContext current, GameAction action)
     {
         this.context = current;
         this.action = action;
@@ -42,9 +42,9 @@ public class MCTSNode
 
     public void step(double exploreFactor, IFilter actionPrune)
     {
-        List<MCTSNode> visited = new LinkedList<>();
+        List<MCTSStandardNode> visited = new LinkedList<>();
 
-        MCTSNode cur = this;
+        MCTSStandardNode cur = this;
         visited.add(this);
         while (!cur.isLeaf()) {
             cur = cur.select(exploreFactor);
@@ -70,29 +70,25 @@ public class MCTSNode
             value = -1;
         }
 
-        for (MCTSNode node : visited) {
+        for (MCTSStandardNode node : visited) {
             node.updateStats(value);
         }
     }
 
-    public double rollOut(MCTSNode node, List<GameAction> validActions)
+    public double rollOut(MCTSStandardNode node, List<GameAction> validActions)
     {
         SimulationContext simulation = node.context.clone();
-
-        //GameAction randAction = validActions.get(rand.nextInt(validActions.size()));
-        //simulation.applyAction(simulation.getActivePlayerId(), randAction);
-
         simulation.playFromMiddle();
         return 1 - simulation.getWinningPlayerId();
     }
 
-    public MCTSNode select(double exploreFactor)
+    public MCTSStandardNode select(double exploreFactor)
     {
         if(isLeaf()) {
             return null;
         }
 
-        MCTSNode bestNode = children.get(0);
+        MCTSStandardNode bestNode = children.get(0);
         double bestValue = bestNode.getUCB(numVisits, exploreFactor);
 
         for(int i = 1; i < children.size(); i++) {
@@ -122,7 +118,7 @@ public class MCTSNode
         if(!context.gameDecided()) {
             for (GameAction possibleAction : actions) {
                 if (!actionPrune.prune(context, possibleAction)) {
-                    MCTSNode child = new MCTSNode(context, possibleAction);
+                    MCTSStandardNode child = new MCTSStandardNode(context, possibleAction);
                     if (children == null) {
                         children = new LinkedList<>();
                     }
@@ -169,7 +165,7 @@ public class MCTSNode
     {
         List<ActionValuePair> childValues = new ArrayList<>();
         if(children != null) {
-            for (MCTSNode child : children) {
+            for (MCTSStandardNode child : children) {
                 childValues.add(new ActionValuePair(child.action, child.getValue(playerID)));
             }
         }
