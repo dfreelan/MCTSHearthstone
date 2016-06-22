@@ -21,8 +21,15 @@ import net.demilich.metastone.gui.deckbuilder.importer.HearthPwnImporter;
 import behaviors.simulation.SimulationContext;
 import behaviors.MCTS.MCTSBehavior;
 
+//TODO: output results to log file while running so that even in the case of a crash intermediate results are saved
+
 public class MetastoneTester
 {
+    /*static {
+        System.setProperty("org.apache.commons.logging.Log",
+                "org.apache.commons.logging.impl.NoOpLog");
+    }*/
+
     private static double[] stats; //0: ties, 1: wins, 2: losses, 3: time elapsed, 4: avg time per game
     public static void main(String[] args) throws Exception
     {
