@@ -142,9 +142,9 @@ public class MetastoneTester
         SimulationContext game = new SimulationContext(p1, p2, new GameLogic(), allCards);
 
         if(parallel) {
-            IntStream.range(0, simulations).parallel().forEach((int i) -> runSimulation(game.clone()));
+            IntStream.range(0, simulations).parallel().forEach((int i) -> runSimulation(game.clone(), i));
         } else {
-            IntStream.range(0, simulations).sequential().forEach((int i) -> runSimulation(game.clone()));
+            IntStream.range(0, simulations).sequential().forEach((int i) -> runSimulation(game.clone(), i));
         }
 
         stats[3] = (System.nanoTime() - beginTime) / 1e9;
@@ -157,12 +157,13 @@ public class MetastoneTester
         System.out.println("Average Time Per Game: " + stats[4] + "s");
     }
 
-    private static void runSimulation(SimulationContext game)
+    private static void runSimulation(SimulationContext game, int gameNum)
     {
         game.randomize(0);
         game.randomize(1);
         game.play();
         updateStats(game.getWinningPlayerId());
+        System.out.println("Finished Simulation[" + gameNum + "], Result = " + game.getWinningPlayerId());
     }
 
     private static synchronized void updateStats(int result)
