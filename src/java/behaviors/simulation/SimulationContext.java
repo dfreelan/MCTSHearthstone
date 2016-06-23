@@ -87,27 +87,45 @@ public class SimulationContext implements Cloneable
             clone.getPlayer2().setDeck(new SimulationCardCollection(clone.getPlayer2().getDeck()));
             clone.setLogic(new SimulationLogic(clone.getLogic()));
         }
-        HashMap cloneMap = (HashMap)clone.getEnvironment();
+
+        /*HashMap cloneMap = (HashMap)clone.getEnvironment();
 
         Stack<EntityReference> newStack = (Stack<EntityReference>) ((Stack<EntityReference>) context.getEnvironment().get(Environment.SUMMON_REFERENCE_STACK));
+
         if (newStack != null) {
+            Stack<EntityReference> oldStack =  newStack;
             newStack = (Stack<EntityReference>) newStack.clone();
             for (int i = 0; i < newStack.size(); i++) {
-                newStack.set(i, (EntityReference) ((EntityReference) newStack.get(i)));
+                newStack.set(i, new EntityReference(oldStack.get(i).getId()));
             }
             cloneMap.remove(Environment.SUMMON_REFERENCE_STACK);
             cloneMap.put(Environment.SUMMON_REFERENCE_STACK, newStack);
         }
+        cloneEntity(context,clone,Environment.TARGET_OVERRIDE,cloneMap);
+        cloneEntity(context,clone,Environment.KILLED_MINION,cloneMap);
+        cloneEntity(context,clone,Environment.ATTACKER_REFERENCE,cloneMap);
+        cloneEntity(context,clone,Environment.TARGET,cloneMap);
+        Minion transform = (Minion) context.getEnvironment().get(Environment.TRANSFORM_REFERENCE);
+        if (transform != null) {
+            transform = transform.clone();
+            cloneMap.put(Environment.TRANSFORM_REFERENCE, transform);
+        }
+
 
         newStack = (Stack<EntityReference>) ((Stack<EntityReference>) context.getEnvironment().get(Environment.EVENT_TARGET_REFERENCE_STACK));
         if (newStack != null) {
+            Stack<EntityReference> oldStack =  newStack;
             newStack = (Stack<EntityReference>) newStack.clone();
             for (int i = 0; i < newStack.size(); i++) {
-                newStack.set(i, (EntityReference) ((EntityReference) newStack.get(i)));
+                newStack.set(i, new EntityReference( oldStack.get(i).getId()));
             }
             cloneMap.remove(Environment.EVENT_TARGET_REFERENCE_STACK);
             cloneMap.put(Environment.EVENT_TARGET_REFERENCE_STACK, newStack);
         }
+        */
+
+
+
         return clone;
     }
 
@@ -143,8 +161,12 @@ public class SimulationContext implements Cloneable
     {
         List<GameAction> actions = new ArrayList<>();
         if (getLogic().battlecries != null) {
+            //System.err.println("the valid actions returned were battlecries");
             actions = getLogic().battlecries;
             getLogic().battlecries = null;
+            getLogic().minion = null;
+            getLogic().simulationActive = false;
+
         } else {
             actions = context.getValidActions();
         }
@@ -165,6 +187,7 @@ public class SimulationContext implements Cloneable
         context.setIsInBattleCry(false);
 
         if(action.getActionType() == ActionType.BATTLECRY){
+            //System.err.println("doin the thing where i actually do a battlecry");
             performBattlecryAction(action);
 
         }else {
@@ -200,6 +223,7 @@ public class SimulationContext implements Cloneable
         getLogic().afterCardPlayed(context.getActivePlayerId(), getLogic().source.getCardReference());
         context.setPendingCard(null);
    //     context.getEnvironment().remove(Environment.PENDING_CARD);
+
         context.getEnvironment().remove(Environment.TARGET);
         getLogic().minion = null;
         getLogic().resolveBattlecry = false;

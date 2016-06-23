@@ -72,6 +72,7 @@ public class MCTSBehavior extends Behaviour
     @Override
     public GameAction requestAction(GameContext gameContext, Player player, List<GameAction> validActions)
     {
+
         if(validActions.size() == 1) {
             return validActions.get(0);
         }
