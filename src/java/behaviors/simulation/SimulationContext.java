@@ -159,7 +159,7 @@ public class SimulationContext implements Cloneable
 
     public List<GameAction> getValidActions()
     {
-        List<GameAction> actions = new ArrayList<GameAction>();
+        List<GameAction> actions = new ArrayList<>();
         if (getLogic().battlecries != null) {
             //System.err.println("the valid actions returned were battlecries");
             actions = getLogic().battlecries;
@@ -172,9 +172,11 @@ public class SimulationContext implements Cloneable
         }
         return actions;
     }
+
     public SimulationLogic getLogic(){
         return (SimulationLogic)context.getLogic();
     }
+
     public void applyAction(int playerID, GameAction action)
     {
        if(action==null){
@@ -206,7 +208,6 @@ public class SimulationContext implements Cloneable
     }
 
     public void performBattlecryAction(GameAction battlecry) {
-
 
         boolean resolvedLate = getLogic().minion.getBattlecry().isResolvedLate();
 
