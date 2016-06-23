@@ -240,7 +240,7 @@ public class MetastoneTester
                 Files.createFile(path);
             } catch (Exception e) {
                 e.printStackTrace();
-                throw new RuntimeException("Error creating + " + path.getName(0));
+                throw new RuntimeException("Error creating + " + path.toString());
             }
         }
 
@@ -248,7 +248,7 @@ public class MetastoneTester
             Files.write(path, text.getBytes());
         } catch (Exception e) {
             e.printStackTrace();
-            throw new RuntimeException("Error writing to + " + path.getName(0));
+            throw new RuntimeException("Error writing to + " + path.toString());
         }
     }
 
