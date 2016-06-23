@@ -25,6 +25,7 @@ public class NNCritic implements Critic
 {
     MultiLayerNetwork network;
 
+    private NNCritic(){}
     public NNCritic(Path loadLocation)
     {
         network = loadNetwork(loadLocation);
@@ -49,7 +50,7 @@ public class NNCritic implements Critic
             inputsArr[index] = fCollector.getFeatures(true, state.getGameContext(), state.getActivePlayer());
 
             labelsArr[index] = new double[1];
-            labelsArr[index][0] = trainConfig.judge.evaluate(state, state.getActivePlayer());
+            labelsArr[index][0] = trainConfig.judge.evaluate(state, state.getActivePlayer())*2.0-1.0;
 
             index++;
         }
@@ -71,7 +72,7 @@ public class NNCritic implements Critic
     {
         FeatureCollector fCollector = new FeatureCollector(context.getGameContext(), pov);
         INDArray features = Nd4j.create(fCollector.getFeatures(true, context.getGameContext(), pov));
-        return network.output(features, Layer.TrainingMode.TEST).get(new SpecifiedIndex(0)).getDouble(0);
+        return (network.output(features, Layer.TrainingMode.TEST).get(new SpecifiedIndex(0)).getDouble(0)+1.0)/(2.0);
     }
 
     private MultiLayerNetwork loadNetwork(Path loadLocation)
@@ -104,5 +105,12 @@ public class NNCritic implements Critic
         } catch(Exception e) {
             throw new RuntimeException("Error saving NN to " + saveLocation.toString());
         }
+    }
+    @Override
+    public Critic clone(){
+        NNCritic clone = new NNCritic();
+        clone.network = this.network.clone();
+
+        return clone;
     }
 }
