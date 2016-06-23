@@ -32,12 +32,15 @@ sourceSets {
 
 
 dependencies{
+    String os = "null"
     provided "org.deeplearning4j:deeplearning4j-core:0.4-rc3.10"
     compile 'org.deeplearning4j:deeplearning4j-core:0.4-rc3.10'
     compile 'org.deeplearning4j:deeplearning4j-cli:0.4-rc3.10'
     compile 'org.deeplearning4j:deeplearning4j-ui:0.4-rc3.10'
     compile 'org.deeplearning4j:deeplearning4j-nlp:0.4-rc3.10'
     compile 'org.nd4j:nd4j-native:0.4-rc3.10'
+    compile group: 'net.sf.trove4j', name: 'trove4j', version: '3.0.3'
+
     if (Os.isFamily(Os.FAMILY_WINDOWS)) {
         os = 'windows-x86_64'
     }else if(Os.isFamily(Os.FAMILY_MAC)) {
@@ -46,5 +49,5 @@ dependencies{
     else {
         os = 'linux-x86_64'
     }
-    compile 'org.nd4j:nd4j-native:0.4-rc3.10:macosx-x86_64'
+    compile 'org.nd4j:nd4j-native:0.4-rc3.10:' + os
 }
