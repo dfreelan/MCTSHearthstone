@@ -1,5 +1,15 @@
 package main;
 
+import java.io.File;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.IntStream;
 
 import behaviors.heuristic.HeuristicBehavior;
@@ -27,11 +37,13 @@ public class MetastoneTester
 {
     private static double[] stats; //0: ties, 1: wins, 2: losses, 3: time elapsed, 4: avg time per game
 
-    public static void main(String[] args) throws Exception
+    public static void main(String[] args)
     {
         long beginTime = System.nanoTime();
         stats = new double[5];
 
+        boolean consoleOutput = true;
+        Path logFile = null;
         boolean parallel = true;
         int simulations = 1;
 
@@ -39,7 +51,7 @@ public class MetastoneTester
         int numTrees = 20;
         int numIterations = 10000;
         double exploreFactor = 1.4;
-        IBehaviour behavior = null;
+        IBehaviour behavior = new MCTSBehavior(exploreFactor, numTrees, numIterations, new PlayRandomBehaviour());
 
         String deckName2 = deckName;
         int numTrees2 = numTrees;
@@ -47,13 +59,17 @@ public class MetastoneTester
         double exploreFactor2 = exploreFactor;
         IBehaviour behavior2 = new PlayRandomBehaviour();
 
+        if(keyExists("-console", args)) {
+            consoleOutput = parseBoolean(argumentForKey("-console", args));
+        }
+        if(keyExists("-logfile", args)) {
+            logFile = Paths.get(argumentForKey("-logfile", args));
+        }
         if(keyExists("-parallel", args)) {
-            String parallelArg = argumentForKey("-parallel", args);
-            if("false".startsWith(parallelArg.toLowerCase())) {
-                parallel = false;
-            } else if(!"true".startsWith(parallelArg.toLowerCase())) {
-                throw new RuntimeException("Error: neither true nor false starts with " + parallelArg + ".");
-            }
+            parallel = parseBoolean(argumentForKey("-parallel", args));
+        }
+        if(keyExists("-parallel", args)) {
+            parallel = parseBoolean(argumentForKey("-parallel", args));
         }
         if(keyExists("-simulations", args)) {
             simulations = Integer.parseInt(argumentForKey("-simulations", args));
@@ -110,39 +126,9 @@ public class MetastoneTester
             behavior2 = getBehavior(behavior2Arg, exploreFactor2, numTrees2, numIterations2);
         }
 
-        new CardProxy();
-
-        DeckProxy dp = new DeckProxy();
-        dp.loadDecks();
-
-        new DeckFormatProxy();
-
         Deck deck1 = loadDeck(deckName);
-        if(behavior == null) {
-            behavior = new MCTSBehavior(exploreFactor, numTrees, numIterations, new PlayRandomBehaviour());
-        }
-        PlayerConfig p1Config = new PlayerConfig(deck1, behavior);
-
         Deck deck2 = loadDeck(deckName2);
-        PlayerConfig p2Config = new PlayerConfig(deck2, behavior2);
-
-        p1Config.build();
-        p2Config.build();
-
-        p1Config.setHeroCard(MetaHero.getHeroCard(deck1.getHeroClass()));
-        p1Config.setName(behavior.getName());
-        p2Config.setHeroCard(MetaHero.getHeroCard(deck2.getHeroClass()));
-        p2Config.setName(behavior2.getName());
-
-        Player p1 = new Player(p1Config);
-        Player p2 = new Player(p2Config);
-
-        DeckFormat allCards = new DeckFormat();
-        for(CardSet set : CardSet.values()) {
-            allCards.addSet(set);
-        }
-
-        SimulationContext game = new SimulationContext(p1, p2, new GameLogic(), allCards);
+        SimulationContext game = createContext(deck1, deck2, behavior, behavior2);
 
         if(parallel) {
             IntStream.range(0, simulations).parallel().forEach((int i) -> runSimulation(game.clone(), i));
@@ -153,6 +139,7 @@ public class MetastoneTester
         stats[3] = (System.nanoTime() - beginTime) / 1e9;
         stats[4] = stats[3] / simulations;
 
+        //TODO: replace all prints with calls to log
         System.out.println("Wins: " + stats[1]);
         System.out.println("Losses: " + stats[2]);
         System.out.println("Ties: " + stats[0]);
@@ -166,7 +153,17 @@ public class MetastoneTester
         game.randomize(1);
         game.play();
         updateStats(game.getWinningPlayerId());
-        System.out.println("Finished Simulation[" + gameNum + "], Result = " + game.getWinningPlayerId());
+        System.out.println("Finished Simulation[" + gameNum + "], Result = " + resultString(game.getWinningPlayerId()));
+    }
+
+    private static String resultString(int result)
+    {
+        switch(result) {
+            case -1: return "Tie";
+            case 0: return "Win";
+            case 1: return "Loss";
+            default: return "UNDEFINED";
+        }
     }
 
     private static synchronized void updateStats(int result)
@@ -186,6 +183,72 @@ public class MetastoneTester
                 behavior.setName("MCTSHeuristicBehavior");
                 return behavior;
             default: throw new RuntimeException("Error: " + name + " behavior does not exist.");
+        }
+    }
+
+    private static SimulationContext createContext(Deck deck1, Deck deck2, IBehaviour behavior1, IBehaviour behavior2)
+    {
+        new CardProxy();
+
+        DeckProxy dp = new DeckProxy();
+        try {
+            dp.loadDecks();
+        } catch(Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error loading decks");
+        }
+
+        new DeckFormatProxy();
+
+        PlayerConfig p1Config = new PlayerConfig(deck1, behavior1);
+        PlayerConfig p2Config = new PlayerConfig(deck2, behavior2);
+
+        p1Config.build();
+        p2Config.build();
+
+        p1Config.setHeroCard(MetaHero.getHeroCard(deck1.getHeroClass()));
+        p1Config.setName(behavior1.getName());
+        p2Config.setHeroCard(MetaHero.getHeroCard(deck2.getHeroClass()));
+        p2Config.setName(behavior2.getName());
+
+        Player p1 = new Player(p1Config);
+        Player p2 = new Player(p2Config);
+
+        DeckFormat allCards = new DeckFormat();
+        for(CardSet set : CardSet.values()) {
+            allCards.addSet(set);
+        }
+
+        return new SimulationContext(p1, p2, new GameLogic(), allCards);
+    }
+
+    private static synchronized void log(String text, boolean consoleOutput, Path logFile)
+    {
+        if(consoleOutput) {
+            System.out.println(text);
+        }
+
+        if(logFile != null) {
+            writeToFile(logFile, text);
+        }
+    }
+
+    private static synchronized void writeToFile(Path path, String text)
+    {
+        if(!Files.exists(path)) {
+            try {
+                Files.createFile(path);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new RuntimeException("Error creating + " + path.getName(0));
+            }
+        }
+
+        try {
+            Files.write(path, text.getBytes());
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error writing to + " + path.getName(0));
         }
     }
 
@@ -209,6 +272,18 @@ public class MetastoneTester
         }
 
         return deck;
+    }
+
+    private static boolean parseBoolean(String str)
+    {
+        str = str.toLowerCase();
+        if("true".startsWith(str)) {
+            return true;
+        } else if("false".startsWith(str)) {
+            return false;
+        } else {
+            throw new RuntimeException("Error: neither true nor false start with " + str + ".");
+        }
     }
 
     private static boolean keyExists(String key, String[] args)
