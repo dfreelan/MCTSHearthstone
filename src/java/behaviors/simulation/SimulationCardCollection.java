@@ -11,7 +11,7 @@ public class SimulationCardCollection extends CardCollection
 
     public SimulationCardCollection(CardCollection cards)
     {
-        this.addAll(cards);
+        this.addAll(cards.clone());
         this.shuffle();
     }
 

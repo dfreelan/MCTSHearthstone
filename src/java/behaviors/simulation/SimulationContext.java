@@ -25,17 +25,13 @@ public class SimulationContext implements Cloneable
 
     public SimulationContext(GameContext context)
     {
-        context.getLogic().setLoggingEnabled(false);
         GameContext clonedContext = deepCloneContext(context);
-
+        clonedContext.getLogic().setLoggingEnabled(false);
         this.context = clonedContext;
-
-        getLogic().setLoggingEnabled(false);
-   }
+    }
 
     public SimulationContext(Player player1, Player player2, GameLogic logic, DeckFormat deckFormat)
     {
-
         context = new GameContext(player1, player2, logic, deckFormat);
         context.getLogic().setLoggingEnabled(false);
         context.setLogic(new SimulationLogic(context.getLogic()));
@@ -83,7 +79,6 @@ public class SimulationContext implements Cloneable
     }
     private GameContext deepCloneContext(){
         return deepCloneContext(this.context);
-
     }
     private GameContext deepCloneContext(GameContext context){
         GameContext clone = context.clone();
@@ -92,8 +87,6 @@ public class SimulationContext implements Cloneable
             clone.getPlayer2().setDeck(new SimulationCardCollection(clone.getPlayer2().getDeck()));
             clone.setLogic(new SimulationLogic(clone.getLogic()));
         }
-
-        clone.getLogic().setContext(clone);
         HashMap cloneMap = (HashMap)clone.getEnvironment();
 
         Stack<EntityReference> newStack = (Stack<EntityReference>) ((Stack<EntityReference>) context.getEnvironment().get(Environment.SUMMON_REFERENCE_STACK));
@@ -142,8 +135,8 @@ public class SimulationContext implements Cloneable
 
     public void setBehavior(IBehaviour behavior)
     {
-        context.getPlayer1().setBehaviour(behavior);
-        context.getPlayer2().setBehaviour(behavior);
+        context.getPlayer1().setBehaviour(behavior.clone());
+        context.getPlayer2().setBehaviour(behavior.clone());
     }
 
     public List<GameAction> getValidActions()

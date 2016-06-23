@@ -118,7 +118,7 @@ public class SimulationLogic extends GameLogic {
             this.source = source.clone();
             this.index = index;
             resolveBattlecry(player.getId(), minion);
-            getGameContext().setIsInBattleCry(true);
+
             if (this.battlecryRequest) {
                 return true;
             }
@@ -154,7 +154,7 @@ public class SimulationLogic extends GameLogic {
             this.minion = minion.clone();
             this.source = source.clone();
             this.index = index;
-            getGameContext().setIsInBattleCry(true);
+
             resolveBattlecry(player.getId(), minion);
             if (this.battlecryRequest) {
                 return true;
@@ -213,9 +213,12 @@ public class SimulationLogic extends GameLogic {
                 battlecryActions.add(targetedBattlecry);
             }
             if (simulationActive) {
-
+                if(battlecryActions.size() <1){
+                    System.err.println("we do have one with no valid targets");
+                }
                 this.battlecries = (ArrayList<GameAction>) battlecryActions;
                 this.battlecryRequest = true;
+                getGameContext().setIsInBattleCry(true);
                 return;
             }else{
                // System.err.println("it is false sometimes");
