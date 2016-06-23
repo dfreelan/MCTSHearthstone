@@ -43,7 +43,7 @@ public class NeuralNetworkBehavior {
         MultiLayerConfiguration conf  = new NeuralNetConfiguration.Builder()
                 .seed(seed).learningRate(1e-1).momentum(.9)
                 .iterations(iterations)
-                .l2(1e-3).regularization(true).miniBatch(false)
+                .learningRateScoreBasedDecayRate(1e-1)
                 .optimizationAlgo(OptimizationAlgorithm.LINE_GRADIENT_DESCENT)
                 .list(2)
                 .layer(0, new DenseLayer.Builder().nIn(numInputs).nOut(numHiddenNodes)
