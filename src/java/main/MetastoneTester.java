@@ -146,7 +146,7 @@ public class MetastoneTester
         game.play();
         updateStats(game.getWinningPlayerId());
         Logger.log("Finished Simulation[" + gameNum + "], Result = " + resultString(game.getWinningPlayerId()), consoleOutput, logFile);
-        Logger.log("Current Status:\n", consoleOutput, logFile);
+        Logger.log("Current Status:", consoleOutput, logFile);
         printStats(stats, false);
     }
 
