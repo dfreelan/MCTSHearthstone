@@ -42,7 +42,7 @@ public class SimulationLogic extends GameLogic {
         if(!getGameContext().getSummonReferenceStack().isEmpty() && getGameContext().getSummonReferenceStack().peek() !=null){
             //System.err.println("doin battlecrysetup");
             minion = (Minion)getGameContext().resolveSingleTarget(getGameContext().getSummonReferenceStack().peek());
-            source = minion.getSourceCard();//(Card)context.resolveCardReference(((PlayCardAction)previousAction).getCardReference());
+            source = getGameContext().getPendingCard();//minion.getSourceCard();//(Card)context.resolveCardReference(((PlayCardAction)previousAction).getCardReference());
             playerId = getGameContext().getActivePlayerId();
 
         }
@@ -52,6 +52,7 @@ public class SimulationLogic extends GameLogic {
         handleEnrage(minion);
         this.getGameContext().getSummonReferenceStack().pop();
         this.getGameContext().fireGameEvent(new BoardChangedEvent(this.getGameContext()));
+
     }
 
     public void afterBattlecry() {
@@ -218,10 +219,13 @@ public class SimulationLogic extends GameLogic {
                 }
                 this.battlecries = (ArrayList<GameAction>) battlecryActions;
                 this.battlecryRequest = true;
+                if(getGameContext().isInBattleCry()){
+                    System.err.println("ERR! nested battlecry");
+                    throw new RuntimeException("nested battlecry");
+                }
+
                 getGameContext().setIsInBattleCry(true);
                 return;
-            }else{
-               // System.err.println("it is false sometimes");
             }
             battlecryAction = player.getBehaviour().requestAction(getGameContext(), player, battlecryActions);
         } else {
