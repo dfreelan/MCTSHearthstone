@@ -27,27 +27,10 @@ public class SimulationContext implements Cloneable
     {
         context.getLogic().setLoggingEnabled(false);
         GameContext clonedContext = deepCloneContext(context);
-        GameContext origContext = context;
+
         this.context = clonedContext;
 
         getLogic().setLoggingEnabled(false);
-        if(!(getLogic() instanceof SimulationLogic)) {
-
-            context.setLogic(new SimulationLogic(clonedContext.getLogic()));
-            //change the decks to use deterministic versions of the decks
-            context.getPlayer1().setDeck(new SimulationCardCollection(clonedContext.getPlayer1().getDeck()));
-            context.getPlayer2().setDeck(new SimulationCardCollection(clonedContext.getPlayer2().getDeck()));
-        }
-
-        if(!context.getSummonReferenceStack().isEmpty() && context.getSummonReferenceStack().peek() !=null){
-            //System.err.println("doin battlecrysetup");
-            getLogic().minion = (Minion)context.resolveSingleTarget(context.getSummonReferenceStack().peek());
-            getLogic().source = getLogic().minion.getSourceCard();//(Card)context.resolveCardReference(((PlayCardAction)previousAction).getCardReference());
-            if(origContext.getLogic() instanceof SimulationLogic){
-                SimulationLogic origLogic = (SimulationLogic)origContext.getLogic();
-                getLogic().battlecries = origLogic.battlecries;
-            }
-        }
    }
 
     public SimulationContext(Player player1, Player player2, GameLogic logic, DeckFormat deckFormat)
@@ -96,9 +79,6 @@ public class SimulationContext implements Cloneable
     @Override
     public SimulationContext clone()
     {
-
-
-
         return new SimulationContext(context);
     }
     private GameContext deepCloneContext(){
@@ -107,6 +87,13 @@ public class SimulationContext implements Cloneable
     }
     private GameContext deepCloneContext(GameContext context){
         GameContext clone = context.clone();
+        if(!(clone.getLogic() instanceof SimulationLogic)) {
+            clone.getPlayer1().setDeck(new SimulationCardCollection(clone.getPlayer1().getDeck()));
+            clone.getPlayer2().setDeck(new SimulationCardCollection(clone.getPlayer2().getDeck()));
+            clone.setLogic(new SimulationLogic(clone.getLogic()));
+        }
+
+        clone.getLogic().setContext(clone);
         HashMap cloneMap = (HashMap)clone.getEnvironment();
 
         Stack<EntityReference> newStack = (Stack<EntityReference>) ((Stack<EntityReference>) context.getEnvironment().get(Environment.SUMMON_REFERENCE_STACK));
@@ -219,7 +206,7 @@ public class SimulationContext implements Cloneable
         getLogic().afterCardPlayed(context.getActivePlayerId(), getLogic().source.getCardReference());
         context.setPendingCard(null);
    //     context.getEnvironment().remove(Environment.PENDING_CARD);
-   //     context.getEnvironment().remove(Environment.TARGET);
+        context.getEnvironment().remove(Environment.TARGET);
         getLogic().minion = null;
         getLogic().resolveBattlecry = false;
         getLogic().battlecries = null;
