@@ -71,7 +71,7 @@ public class MCTSBehavior extends Behaviour
 
         for(int i = 0; i < numTrees; i++) {
 
-            MCTSNode root = template.nodeFactoryMethod(new SimulationContext(gameContext), null, validActions);
+            MCTSNode root = template.nodeFactoryMethod(new SimulationContext(gameContext,previousAction), null, validActions);
 
             root.getContext().randomize(player.getId());
 
@@ -100,8 +100,8 @@ public class MCTSBehavior extends Behaviour
         }
 
 
-
-        return validActions.get(maxIndex);
+        previousAction = validActions.get(maxIndex);
+        return previousAction;
     }
 
     private void runForest(MCTSTree[] trees, double[][] accumulateStats, Map<Integer, Integer> actionHashToIndex, int treeIndex)
