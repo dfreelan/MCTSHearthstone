@@ -2,18 +2,23 @@ package behaviors.critic;
 
 import behaviors.simulation.SimulationContext;
 import behaviors.util.FeatureCollector;
+import behaviors.util.Logger;
 import behaviors.util.StateCollector;
 import behaviors.util.StateJudge;
+import net.demilich.metastone.game.GameContext;
 import net.demilich.metastone.game.Player;
+import org.deeplearning4j.nn.api.Layer;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.SpecifiedIndex;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 public class NNCritic implements Critic
@@ -30,11 +35,33 @@ public class NNCritic implements Critic
         network = new MultiLayerNetwork(networkConfig);
         network.init();
 
-        List<SimulationContext> states = trainConfig.collector.collectStates(trainConfig.numStates, trainConfig.initialState);
-        
-        while(!states.isEmpty()) {
+        List<SimulationContext> states = trainConfig.collector.collectStates(trainConfig.numStates, trainConfig.initialState, trainConfig.parallel);
+        double[][] inputsArr = new double[trainConfig.numStates][];
+        double[][] labelsArr = new double[trainConfig.numStates][];
 
+        GameContext context = trainConfig.initialState.getGameContext();
+        FeatureCollector fCollector = new FeatureCollector(context, context.getPlayer1());
+
+        int index = 0;
+        while(!states.isEmpty()) {
+            SimulationContext state = states.remove(states.size() - 1);
+
+            inputsArr[index] = fCollector.getFeatures(true, state.getGameContext(), state.getActivePlayer());
+
+            labelsArr[index] = new double[1];
+            labelsArr[index][0] = trainConfig.judge.evaluate(state, state.getActivePlayer());
+
+            index++;
         }
+
+        INDArray inputs = Nd4j.create(inputsArr);
+        INDArray labels = Nd4j.create(labelsArr);
+
+        inputsArr = null;
+        labelsArr = null;
+
+        network.setListeners(new TrainingIterationListener(10, true, null));
+        network.fit(inputs, labels);
 
         saveNetwork(network, saveLocation);
     }
@@ -44,7 +71,7 @@ public class NNCritic implements Critic
     {
         FeatureCollector fCollector = new FeatureCollector(context.getGameContext(), pov);
         INDArray features = Nd4j.create(fCollector.getFeatures(true, context.getGameContext(), pov));
-        return network.output(features).get(new SpecifiedIndex(0)).getDouble(0);
+        return network.output(features, Layer.TrainingMode.TEST).get(new SpecifiedIndex(0)).getDouble(0);
     }
 
     private MultiLayerNetwork loadNetwork(Path loadLocation)
