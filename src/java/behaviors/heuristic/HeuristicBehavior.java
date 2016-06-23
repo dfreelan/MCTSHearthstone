@@ -14,6 +14,7 @@ import net.demilich.metastone.game.entities.Actor;
 import net.demilich.metastone.game.targeting.EntityReference;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.TreeMap;
@@ -21,8 +22,8 @@ import java.util.TreeMap;
 public class HeuristicBehavior extends Behaviour
 {
     private Random rand;
-    ActionComparator actionComparator;
-    ThreatBasedHeuristic heuristic;
+    private ActionComparator actionComparator;
+    private ThreatBasedHeuristic heuristic;
 
     private String name = "Heuristic";
 
@@ -30,7 +31,7 @@ public class HeuristicBehavior extends Behaviour
     private List<GameAction> spellBlacklist;
     private List<GameAction> summonBlacklist;
 
-    public void initialize()
+    private void initialize()
     {
         rand = new Random();
         actionComparator = new ActionComparator();
@@ -67,7 +68,6 @@ public class HeuristicBehavior extends Behaviour
             return validActions.get(0);
         }
 
-        //TODO: differentiate between attacks where minions and heroes are attackers
         TreeMap<GameAction, List<GameAction>> minionAttacks = new TreeMap<>(actionComparator);
         TreeMap<GameAction, List<GameAction>> heroAttacks = new TreeMap<>(actionComparator);
         TreeMap<GameAction, List<GameAction>> spells = new TreeMap<>(actionComparator);
@@ -75,10 +75,6 @@ public class HeuristicBehavior extends Behaviour
         List<TreeMap<GameAction, List<GameAction>>> nonemptyCategories = new ArrayList<>();
 
         for (GameAction action : validActions) {
-            if(action==null){
-                System.err.println("I was supplied a null action! don't do that!");
-                throw new RuntimeException("was supplied a null action in heuristic behavior");
-            }
             //check source to check for battlecry
             Actor source = (Actor) gameContext.resolveSingleTarget(action.getSource());
             TreeMap<GameAction, List<GameAction>> category = null;
@@ -88,12 +84,12 @@ public class HeuristicBehavior extends Behaviour
                 } else if (!onBlacklist(action, minionBlacklist)) {
                     category = minionAttacks;
                 }
-                //vv  source being null should indicate that the action is not a battlecry vv
+            //vv  source being null should indicate that the action is not a battlecry vv
             } else if (action.getActionType().equals(ActionType.SUMMON) && source == null) {
                 if (!onBlacklist(action, summonBlacklist)) {
                     category = summons;
                 }
-                //vv  everything else, battlecry, spells, hero power,discover,equip weapon,  etc but not system and end_turn, each  vv
+            //vv  everything else, battlecry, spells, hero power,discover,equip weapon,  etc but not system and end_turn, each  vv
             } else if (!action.getActionType().equals(ActionType.SYSTEM) && !action.getActionType().equals(ActionType.END_TURN)) {
                 if (!onBlacklist(action, spellBlacklist)) {
                     category = spells;
@@ -104,11 +100,11 @@ public class HeuristicBehavior extends Behaviour
                 if (category.isEmpty() && category != heroAttacks) {
                     nonemptyCategories.add(category);
                 }
-
                 addAction(action, category);
             }
         }
-        //select an action. Will check/add things to the blacklist
+
+        //select an action, may add things to the blacklist
         while (!nonemptyCategories.isEmpty()) {
             TreeMap<GameAction, List<GameAction>> category = nonemptyCategories.get(rand.nextInt(nonemptyCategories.size()));
             int actionGroupIndex = rand.nextInt(category.size());
@@ -122,20 +118,49 @@ public class HeuristicBehavior extends Behaviour
                 currIndex++;
             }
 
-            if (rand.nextBoolean()) {
+            if (rand.nextBoolean() || actionGroup.getActionType().equals(ActionType.BATTLECRY)) {
                 List<GameAction> actions = category.get(actionGroup);
                 GameAction action = actions.get(rand.nextInt(actions.size()));
 
                 boolean chooseAction = true;
                 if(category == spells) {
                     SimulationContext simulation = new SimulationContext(gameContext);
-                    if(action == null) {
-                        throw new RuntimeException("action null before applyaction");
-                    }
-                    simulation.applyAction(player.getId(), action);
                     double currentScore = heuristic.getScore(gameContext, player.getId());
-                    double afterScore = heuristic.getScore(simulation.getGameContext(), player.getId());
-                    chooseAction = afterScore > currentScore;
+
+                    if (actionGroup.getActionType().equals(ActionType.BATTLECRY)) {
+                        double maxScore = Double.NEGATIVE_INFINITY;
+                        List<GameAction> battlecries = new ArrayList<>(validActions);
+                        Collections.shuffle(battlecries);
+                        for (GameAction battlecry : battlecries) {
+                            SimulationContext afterBattlecry = simulation.clone();
+                            afterBattlecry.applyAction(player.getId(), battlecry);
+                            double afterBattlecryScore = heuristic.getScore(afterBattlecry.getGameContext(), player.getId());
+
+                            if (afterBattlecryScore > maxScore) {
+                                action = battlecry;
+                                if (afterBattlecryScore > currentScore) {
+                                    break;
+                                }
+                                maxScore = afterBattlecryScore;
+                            }
+                        }
+                    } else {
+
+                        simulation.applyAction(player.getId(), action);
+                        if (action.getActionType().equals(ActionType.SUMMON)) {
+                            chooseAction = false;
+                            for (GameAction battlecry : simulation.getValidActions()) {
+                                SimulationContext afterBattlecry = simulation.clone();
+                                afterBattlecry.applyAction(player.getId(), battlecry);
+                                if (heuristic.getScore(afterBattlecry.getGameContext(), player.getId()) > currentScore) {
+                                    chooseAction = true;
+                                    break;
+                                }
+                            }
+                        } else {
+                            chooseAction = heuristic.getScore(simulation.getGameContext(), player.getId()) > currentScore;
+                        }
+                    }
                 }
                 if(chooseAction) {
                     return action;

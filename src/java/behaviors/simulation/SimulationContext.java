@@ -151,13 +151,13 @@ public class SimulationContext implements Cloneable
 
     public void setBehavior(IBehaviour behavior)
     {
-        context.getPlayer1().setBehaviour(behavior);
-        context.getPlayer2().setBehaviour(behavior);
+        context.getPlayer1().setBehaviour(behavior.clone());
+        context.getPlayer2().setBehaviour(behavior.clone());
     }
 
     public List<GameAction> getValidActions()
     {
-        List<GameAction> actions = new ArrayList<GameAction>();
+        List<GameAction> actions = new ArrayList<>();
         if (getLogic().battlecries != null) {
             actions = getLogic().battlecries;
             getLogic().battlecries = null;
@@ -166,9 +166,11 @@ public class SimulationContext implements Cloneable
         }
         return actions;
     }
+
     public SimulationLogic getLogic(){
         return (SimulationLogic)context.getLogic();
     }
+
     public void applyAction(int playerID, GameAction action)
     {
        if(action==null){
@@ -199,7 +201,6 @@ public class SimulationContext implements Cloneable
     }
 
     public void performBattlecryAction(GameAction battlecry) {
-
 
         boolean resolvedLate = getLogic().minion.getBattlecry().isResolvedLate();
 
