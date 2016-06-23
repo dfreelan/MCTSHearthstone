@@ -9,23 +9,22 @@ import behaviors.util.ActionValuePair;
 public class MCTSTree
 {
     private double exploreFactor;
-    private MCTSStandardNode root;
-    private IFilter actionPrune;
+    private MCTSNode root;
 
-    public MCTSTree(double exploreFactor, MCTSStandardNode root, IFilter actionPrune)
+    public MCTSTree(double exploreFactor, MCTSNode root)
     {
         this.exploreFactor = exploreFactor;
         this.root = root;
-        this.actionPrune = actionPrune;
+
     }
 
     public List<ActionValuePair> run(int iterations)
     {
         for(int i = 0; i < iterations; i++) {
-            root.step(exploreFactor, actionPrune);
+            root.step(exploreFactor);
         }
         return root.getChildValues(root.getContext().getActivePlayerId());
     }
 
-    public MCTSStandardNode getRoot() { return root; }
+    public MCTSNode getRoot() { return root; }
 }

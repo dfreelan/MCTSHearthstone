@@ -1,18 +1,14 @@
 package main;
 
-import java.io.File;
-import java.nio.charset.Charset;
+
 import java.nio.file.Files;
-import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.List;
+
 import java.util.stream.IntStream;
 
 import behaviors.heuristic.HeuristicBehavior;
+import behaviors.standardMCTS.MCTSStandardNode;
 import net.demilich.metastone.game.Player;
 import net.demilich.metastone.game.behaviour.IBehaviour;
 import net.demilich.metastone.game.behaviour.PlayRandomBehaviour;
@@ -47,11 +43,11 @@ public class MetastoneTester
         boolean parallel = true;
         int simulations = 1;
 
-        String deckName = "controlwarrior";
+        String deckName = "nobattlecryhunter";
         int numTrees = 20;
         int numIterations = 10000;
         double exploreFactor = 1.4;
-        IBehaviour behavior = new MCTSBehavior(exploreFactor, numTrees, numIterations, new PlayRandomBehaviour());
+        IBehaviour behavior = new MCTSBehavior(exploreFactor, numTrees, numIterations, new MCTSStandardNode(new PlayRandomBehaviour()));
 
         String deckName2 = deckName;
         int numTrees2 = numTrees;
@@ -125,7 +121,9 @@ public class MetastoneTester
             String behavior2Arg = argumentForKey("-behavior2", args);
             behavior2 = getBehavior(behavior2Arg, exploreFactor2, numTrees2, numIterations2);
         }
+        new CardProxy();
 
+        DeckProxy dp = new DeckProxy();
         Deck deck1 = loadDeck(deckName);
         Deck deck2 = loadDeck(deckName2);
         SimulationContext game = createContext(deck1, deck2, behavior, behavior2);
@@ -177,9 +175,9 @@ public class MetastoneTester
             case "random": return new PlayRandomBehaviour();
             case "heuristic": return new HeuristicBehavior();
             case "gamestate": return new GameStateValueBehaviour();
-            case "mcts": return new MCTSBehavior(exploreFactor, numTrees, numIterations, new PlayRandomBehaviour());
+            case "mcts": return new MCTSBehavior(exploreFactor, numTrees, numIterations, new MCTSStandardNode(new PlayRandomBehaviour()));
             case "mctsheuristic":
-                MCTSBehavior behavior = new MCTSBehavior(exploreFactor, numTrees, numIterations, new HeuristicBehavior());
+                MCTSBehavior behavior = new MCTSBehavior(exploreFactor, numTrees, numIterations, new MCTSStandardNode(new HeuristicBehavior()));
                 behavior.setName("MCTSHeuristicBehavior");
                 return behavior;
             default: throw new RuntimeException("Error: " + name + " behavior does not exist.");
