@@ -9,6 +9,7 @@ import java.util.stream.IntStream;
 
 import behaviors.heuristic.HeuristicBehavior;
 import behaviors.standardMCTS.MCTSStandardNode;
+import behaviors.util.Logger;
 import net.demilich.metastone.game.Player;
 import net.demilich.metastone.game.behaviour.IBehaviour;
 import net.demilich.metastone.game.behaviour.PlayRandomBehaviour;
@@ -27,19 +28,17 @@ import net.demilich.metastone.gui.deckbuilder.importer.HearthPwnImporter;
 import behaviors.simulation.SimulationContext;
 import behaviors.MCTS.MCTSBehavior;
 
-//TODO: output results to log file while running so that even in the case of a crash intermediate results are saved
-
 public class MetastoneTester
 {
     private static double[] stats; //0: ties, 1: wins, 2: losses, 3: time elapsed, 4: avg time per game
+    private static boolean consoleOutput = true;
+    private static Path logFile = null;
 
     public static void main(String[] args)
     {
         long beginTime = System.nanoTime();
         stats = new double[5];
 
-        boolean consoleOutput = true;
-        Path logFile = null;
         boolean parallel = true;
         int simulations = 1;
 
@@ -137,12 +136,7 @@ public class MetastoneTester
         stats[3] = (System.nanoTime() - beginTime) / 1e9;
         stats[4] = stats[3] / simulations;
 
-        //TODO: replace all prints with calls to log
-        System.out.println("Wins: " + stats[1]);
-        System.out.println("Losses: " + stats[2]);
-        System.out.println("Ties: " + stats[0]);
-        System.out.println("Time Elapsed: " + stats[3] + "s");
-        System.out.println("Average Time Per Game: " + stats[4] + "s");
+        printStats(stats, true);
     }
 
     private static void runSimulation(SimulationContext game, int gameNum)
@@ -151,7 +145,22 @@ public class MetastoneTester
         game.randomize(1);
         game.play();
         updateStats(game.getWinningPlayerId());
-        System.out.println("Finished Simulation[" + gameNum + "], Result = " + resultString(game.getWinningPlayerId()));
+        Logger.log("Finished Simulation[" + gameNum + "], Result = " + resultString(game.getWinningPlayerId()), consoleOutput, logFile);
+        Logger.log("Current Status:\n", consoleOutput, logFile);
+        printStats(stats, false);
+    }
+
+    private static void printStats(double[] stats, boolean includeTime)
+    {
+        String status = "";
+        status += "Wins: " + stats[1] + "\n";
+        status += "Losses: " + stats[2] + "\n";
+        status += "Ties: " + stats[0] + "\n";
+        if(includeTime) {
+            status += "Time Elapsed: " + stats[3] + "s\n";
+            status += "Average Time Per Game: " + stats[4] + "s\n";
+        }
+        Logger.log(status, consoleOutput, logFile);
     }
 
     private static String resultString(int result)
@@ -218,36 +227,6 @@ public class MetastoneTester
         }
 
         return new SimulationContext(p1, p2, new GameLogic(), allCards);
-    }
-
-    private static synchronized void log(String text, boolean consoleOutput, Path logFile)
-    {
-        if(consoleOutput) {
-            System.out.println(text);
-        }
-
-        if(logFile != null) {
-            writeToFile(logFile, text);
-        }
-    }
-
-    private static synchronized void writeToFile(Path path, String text)
-    {
-        if(!Files.exists(path)) {
-            try {
-                Files.createFile(path);
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw new RuntimeException("Error creating + " + path.getName(0));
-            }
-        }
-
-        try {
-            Files.write(path, text.getBytes());
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Error writing to + " + path.getName(0));
-        }
     }
 
     private static Deck loadDeck(String name)
