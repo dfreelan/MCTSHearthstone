@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.IntStream;
 
-import behaviors.standardMCTS.MCTSStandardNode;
+
 import net.demilich.metastone.game.GameContext;
 import net.demilich.metastone.game.Player;
 import net.demilich.metastone.game.actions.ActionType;
@@ -30,14 +30,14 @@ public class MCTSBehavior extends Behaviour
     private IFilter actionPrune;
     private GameAction previousAction = null;
     private String name = "MCTSBehavior";
+    private MCTSNode template;
 
-    public MCTSBehavior(double exploreFactor, int numTrees, int numIterations, IBehaviour rolloutBehavior)
+    public MCTSBehavior(double exploreFactor, int numTrees, int numIterations, MCTSNode template)
     {
         super();
         this.exploreFactor = exploreFactor;
         this.numTrees = numTrees;
         this.numIterations = numIterations;
-        this.rolloutBehavior = rolloutBehavior;
         this.statCompressor = (double[][] accumulateStats) -> {
             double[] compressed = new double[accumulateStats[0].length];
             for(int action = 0; action < accumulateStats[0].length; action++) {
@@ -53,21 +53,10 @@ public class MCTSBehavior extends Behaviour
             }
             return compressed;
         };
-        this.actionPrune = (SimulationContext context, GameAction action) -> {
-            return action.getActionType() == ActionType.SUMMON && action.getTargetKey() != null;
-        };
+
+        this.template = template;
     }
 
-    public MCTSBehavior(double exploreFactor, int numTrees, int numIterations, IBehaviour rolloutBehavior, IArrayCompressor<double[]> statCompressor, IFilter actionPrune)
-    {
-        super();
-        this.exploreFactor = exploreFactor;
-        this.numTrees = numTrees;
-        this.numIterations = numIterations;
-        this.rolloutBehavior = rolloutBehavior;
-        this.statCompressor = statCompressor;
-        this.actionPrune = actionPrune;
-    }
 
     @Override
     public GameAction requestAction(GameContext gameContext, Player player, List<GameAction> validActions)
@@ -82,11 +71,11 @@ public class MCTSBehavior extends Behaviour
 
         for(int i = 0; i < numTrees; i++) {
 
-            MCTSStandardNode root = new MCTSStandardNode(new SimulationContext(gameContext), null, validActions);
-            root.getContext().setBehavior(rolloutBehavior);
+            MCTSNode root = template.nodeFactoryMethod(new SimulationContext(gameContext), null, validActions);
+
             root.getContext().randomize(player.getId());
 
-            trees[i] = new MCTSTree(exploreFactor, root, actionPrune);
+            trees[i] = new MCTSTree(exploreFactor, root);
 
             accumulateStats[i] = new double[validActions.size()];
             for(int j = 0; j < accumulateStats[i].length; j++) {
@@ -118,8 +107,7 @@ public class MCTSBehavior extends Behaviour
     private void runForest(MCTSTree[] trees, double[][] accumulateStats, Map<Integer, Integer> actionHashToIndex, int treeIndex)
     {
         trees[treeIndex].run(numIterations / numTrees);
-
-        MCTSStandardNode root = trees[treeIndex].getRoot();
+        MCTSNode root = trees[treeIndex].getRoot();
         List<ActionValuePair> actionValues = root.getChildValues(root.getContext().getActivePlayerId());
         for(ActionValuePair actionValue : actionValues) {
             int actionIndex = actionHashToIndex.get(actionHash(actionValue.action));

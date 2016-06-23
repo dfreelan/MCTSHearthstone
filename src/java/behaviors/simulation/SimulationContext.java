@@ -34,7 +34,7 @@ public class SimulationContext implements Cloneable
     {
         context = new GameContext(player1, player2, logic, deckFormat);
         context.getLogic().setLoggingEnabled(false);
-        context.setLogic(new SimulationLogic(context.getLogic()));
+
     }
 
     //shuffle deck and make a random hand for my opponent
@@ -82,10 +82,9 @@ public class SimulationContext implements Cloneable
     }
     private GameContext deepCloneContext(GameContext context){
         GameContext clone = context.clone();
-        if(!(clone.getLogic() instanceof SimulationLogic)) {
+        if(!(clone.getPlayer1().getDeck() instanceof SimulationCardCollection)) {
             clone.getPlayer1().setDeck(new SimulationCardCollection(clone.getPlayer1().getDeck()));
             clone.getPlayer2().setDeck(new SimulationCardCollection(clone.getPlayer2().getDeck()));
-            clone.setLogic(new SimulationLogic(clone.getLogic()));
         }
 
         /*HashMap cloneMap = (HashMap)clone.getEnvironment();
@@ -160,16 +159,9 @@ public class SimulationContext implements Cloneable
     public List<GameAction> getValidActions()
     {
         List<GameAction> actions = new ArrayList<>();
-        if (getLogic().battlecries != null) {
-            //System.err.println("the valid actions returned were battlecries");
-            actions = getLogic().battlecries;
-            getLogic().battlecries = null;
-            getLogic().minion = null;
-            getLogic().simulationActive = false;
 
-        } else {
-            actions = context.getValidActions();
-        }
+        actions = context.getValidActions();
+
         return actions;
     }
 
@@ -183,17 +175,17 @@ public class SimulationContext implements Cloneable
            System.err.println("ACTION WAS NULL");
            throw new RuntimeException("action cannot be null");
        }
-        getLogic().battlecries = null;
-        context.setIsInBattleCry(false);
+
+
 
         if(action.getActionType() == ActionType.BATTLECRY){
-            //System.err.println("doin the thing where i actually do a battlecry");
+            System.err.println("doin the thing where i actually do a battlecry");
             performBattlecryAction(action);
 
         }else {
-            getLogic().simulationActive = true;
-            getLogic().performGameAction(context.getActivePlayerId(), action);
-            getLogic().simulationActive = false;
+            //getLogic().simulationActive = true;
+            context.getLogic().performGameAction(context.getActivePlayerId(), action);
+            //getLogic().simulationActive = false;
             context.setIsInBattleCry(false);
 
             if (action.getActionType() == ActionType.END_TURN) {
