@@ -1,6 +1,7 @@
 package behaviors.critic;
 
 
+import org.deeplearning4j.nn.api.Layer;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
@@ -9,6 +10,7 @@ import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
+import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.api.ops.impl.transforms.Sin;
 import org.nd4j.linalg.dataset.DataSet;
@@ -39,15 +41,15 @@ public class NeuralNetworkBehavior {
         int iterations = 10;
         MultiLayerConfiguration conf  = new NeuralNetConfiguration.Builder()
                 .seed(seed).learningRate(1e-1).momentum(.9)
-                .iterations(iterations)
+                .iterations(iterations).useDropConnect(true)
                 .learningRateScoreBasedDecayRate(1e-1)
-                .optimizationAlgo(OptimizationAlgorithm.LINE_GRADIENT_DESCENT)
+                .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                 .list(2)
                 .layer(0, new DenseLayer.Builder().nIn(numInputs).nOut(numHiddenNodes)
                         .activation("leakyrelu")
                         .weightInit(WeightInit.XAVIER)
                         .build())
-                .layer(1, new OutputLayer.Builder(LossFunctions.LossFunction.RMSE_XENT)
+                .layer(1, new OutputLayer.Builder(LossFunctions.LossFunction.SQUARED_LOSS)
                         .weightInit(WeightInit.XAVIER).updater(Updater.SGD)
                         .activation("identity").weightInit(WeightInit.XAVIER)
                         .nIn(numHiddenNodes).nOut(numOutputs).build()).backprop(true)
@@ -57,11 +59,11 @@ public class NeuralNetworkBehavior {
         network.init();
 
         //network.setListeners((IterationListener)null);
-        //network.setListeners(new ScoreIterationListener(100));
+        network.setListeners(new ScoreIterationListener(100));
         network.fit(new DataSet(x0, y0));
         long timeBefore = System.currentTimeMillis();
         for(int i = 0; i<100000; i++) {
-            network.output(x0);
+            network.output(x0, Layer.TrainingMode.TEST);
         }
         System.err.println("total time: " + (System.currentTimeMillis()-timeBefore));
 
