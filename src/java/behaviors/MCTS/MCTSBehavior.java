@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.IntStream;
 
-
+import behaviors.util.StateJudge;
 import net.demilich.metastone.game.GameContext;
 import net.demilich.metastone.game.Player;
 import net.demilich.metastone.game.actions.ActionType;
@@ -20,7 +20,7 @@ import behaviors.util.IArrayCompressor;
 import behaviors.util.IFilter;
 import behaviors.simulation.SimulationContext;
 
-public class MCTSBehavior extends Behaviour
+public class MCTSBehavior extends Behaviour implements StateJudge
 {
     private double exploreFactor;
     private int numTrees;
@@ -102,6 +102,44 @@ public class MCTSBehavior extends Behaviour
 
         previousAction = validActions.get(maxIndex);
         return previousAction;
+    }
+
+    @Override
+    public double evaluate(SimulationContext state, Player pov)
+    {
+        GameContext gameContext = state.getGameContext().clone();
+        List<GameAction> validActions = state.getValidActions();
+        MCTSTree[] trees = new MCTSTree[numTrees];
+        double[][] accumulateStats = new double[numTrees][];
+
+        for(int i = 0; i < numTrees; i++) {
+
+            MCTSNode root = template.nodeFactoryMethod(new SimulationContext(gameContext,previousAction), null, validActions);
+
+            root.getContext().randomize(pov.getId());
+
+            trees[i] = new MCTSTree(exploreFactor, root);
+
+            accumulateStats[i] = new double[validActions.size()];
+            for(int j = 0; j < accumulateStats[i].length; j++) {
+                accumulateStats[i][j] = -1;
+            }
+        }
+
+        Map<Integer, Integer> hashToIndex = new HashMap<>();
+        for(int i = 0; i < validActions.size(); i++) {
+            hashToIndex.put(actionHash(validActions.get(i)), i);
+        }
+
+        IntStream.range(0, numTrees).parallel().forEach((int i) -> runForest(trees, accumulateStats, hashToIndex, i));
+
+        double avgRatio = 0;
+        for(MCTSTree tree : trees) {
+            avgRatio += tree.getRoot().getValue(pov.getId()) / tree.getRoot().getNumVisits();
+            assert(tree.getRoot().getNumVisits() != 0);
+        }
+
+        return avgRatio / trees.length;
     }
 
     private void runForest(MCTSTree[] trees, double[][] accumulateStats, Map<Integer, Integer> actionHashToIndex, int treeIndex)

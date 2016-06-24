@@ -2,9 +2,6 @@ package behaviors.critic;
 
 import behaviors.simulation.SimulationContext;
 import behaviors.util.FeatureCollector;
-import behaviors.util.Logger;
-import behaviors.util.StateCollector;
-import behaviors.util.StateJudge;
 import net.demilich.metastone.game.GameContext;
 import net.demilich.metastone.game.Player;
 import org.deeplearning4j.nn.api.Layer;
@@ -12,26 +9,27 @@ import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.SpecifiedIndex;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.nio.file.Paths;
 import java.util.List;
 
-public class NNCritic implements Critic
+public class NeuralNetworkCritic implements Critic
 {
     MultiLayerNetwork network;
+    FeatureCollector fCollector;
 
-    private NNCritic(){}
-    public NNCritic(Path loadLocation)
+    private NeuralNetworkCritic(){}
+    public NeuralNetworkCritic(Path loadLocation, SimulationContext initialState)
     {
+        fCollector = new FeatureCollector(initialState.getGameContext(), initialState.getGameContext().getPlayer1());
         network = loadNetwork(loadLocation);
     }
 
-    public NNCritic(MultiLayerConfiguration networkConfig, TrainConfig trainConfig, Path saveLocation)
+    public NeuralNetworkCritic(MultiLayerConfiguration networkConfig, TrainConfig trainConfig, Path saveLocation)
     {
         network = new MultiLayerNetwork(networkConfig);
         network.init();
@@ -41,8 +39,10 @@ public class NNCritic implements Critic
         double[][] labelsArr = new double[trainConfig.numStates][];
 
         GameContext context = trainConfig.initialState.getGameContext();
-        FeatureCollector fCollector = new FeatureCollector(context, context.getPlayer1());
+        System.err.println("Context is: " + context);
+        fCollector = new FeatureCollector(context, context.getPlayer1());
 
+        System.err.println("NumFeatures in NNCritic: " + fCollector.getFeatures(true, context, context.getPlayer1()).length);
         int index = 0;
         while(!states.isEmpty()) {
             SimulationContext state = states.remove(states.size() - 1);
@@ -61,8 +61,10 @@ public class NNCritic implements Critic
         inputsArr = null;
         labelsArr = null;
 
-        network.setListeners(new TrainingIterationListener(10, true, null));
+        network.setListeners(new TrainingIterationListener(1, true, Paths.get("training_log.txt")));
+        System.err.println("BEFORE TRAINING");
         network.fit(inputs, labels);
+        System.err.println("AFTER TRAINING");
 
         saveNetwork(network, saveLocation);
     }
@@ -70,7 +72,6 @@ public class NNCritic implements Critic
     @Override
     public double getCritique(SimulationContext context, Player pov)
     {
-        FeatureCollector fCollector = new FeatureCollector(context.getGameContext(), pov);
         INDArray features = Nd4j.create(fCollector.getFeatures(true, context.getGameContext(), pov));
         return (network.output(features, Layer.TrainingMode.TEST).get(new SpecifiedIndex(0)).getDouble(0)+1.0)/(2.0);
     }
@@ -108,8 +109,9 @@ public class NNCritic implements Critic
     }
     @Override
     public Critic clone(){
-        NNCritic clone = new NNCritic();
+        NeuralNetworkCritic clone = new NeuralNetworkCritic();
         clone.network = this.network.clone();
+        clone.fCollector = fCollector.clone();
 
         return clone;
     }

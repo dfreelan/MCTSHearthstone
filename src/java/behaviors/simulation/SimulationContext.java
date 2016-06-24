@@ -27,11 +27,8 @@ public class SimulationContext implements Cloneable
     {
         context.getLogic().setLoggingEnabled(false);
         GameContext clonedContext = deepCloneContext(context);
-
         clonedContext.getLogic().setLoggingEnabled(false);
-        if(! (context.getLogic() instanceof SimulationLogic)) {
-            clonedContext.setLogic(new SimulationLogic(clonedContext.getLogic()));
-
+        if(! (clonedContext.getPlayer1().getDeck() instanceof SimulationCardCollection)) {
             //change the decks to use deterministic versions of the decks
             clonedContext.getPlayer1().setDeck(new SimulationCardCollection(clonedContext.getPlayer1().getDeck()));
             clonedContext.getPlayer2().setDeck(new SimulationCardCollection(clonedContext.getPlayer2().getDeck()));
@@ -40,21 +37,13 @@ public class SimulationContext implements Cloneable
    }
     public SimulationContext(GameContext context, GameAction previousAction) {
         this(context);
-        //System.err.println("mylast turn action was: " + previousAction);
-        if(!context.getSummonReferenceStack().isEmpty() && context.getSummonReferenceStack().peek() !=null){
-            //System.err.println("this minion i battlecried with last turn: " + context.getSummonReferenceStack().peek());
-            getLogic().minion = (Minion)context.resolveSingleTarget(context.getSummonReferenceStack().peek());
-
-            getLogic().source = getLogic().minion.getSourceCard();//(Card)context.resolveCardReference(((PlayCardAction)previousAction).getCardReference());
-            //System.err.println("did i actually find him? " + getLogic().minion);
-        }
     }
 
     public SimulationContext(Player player1, Player player2, GameLogic logic, DeckFormat deckFormat)
     {
         context = new GameContext(player1, player2, logic, deckFormat);
         context.getLogic().setLoggingEnabled(false);
-        context.setLogic(new SimulationLogic(context.getLogic()));
+        //context.setLogic(new SimulationLogic(context.getLogic()));
     }
 
     //shuffle deck and make a random hand for my opponent
@@ -84,35 +73,32 @@ public class SimulationContext implements Cloneable
         }
     }
 
-    private void cloneEntity(GameContext state, GameContext clone, Environment e, HashMap cloneMap){
-        Entity entity = (Entity) state.getEnvironment().get(e);
-        if (entity != null) {
-            entity = (Entity) entity.clone();
-            cloneMap.put(e, entity);
-        }
-    }
 
     @Override
     public SimulationContext clone()
     {
-        GameContext clone = deepCloneContext();
-        clone.setLogic(getLogic().clone());
-        clone.getLogic().setLoggingEnabled(false);
-        return new SimulationContext(clone);
+        return new SimulationContext(context);
     }
-    private GameContext deepCloneContext(){
-        return deepCloneContext(this.context);
 
+    private GameContext deepCloneContext()
+    {
+        return deepCloneContext(this.context);
     }
+
     private GameContext deepCloneContext(GameContext context){
         GameContext clone = context.clone();
+
+        clone.getPlayer1().setBehaviour(clone.getPlayer1().getBehaviour().clone());
+        clone.getPlayer2().setBehaviour(clone.getPlayer2().getBehaviour().clone());
+
         HashMap cloneMap = (HashMap)clone.getEnvironment();
 
         Stack<EntityReference> newStack = (Stack<EntityReference>) ((Stack<EntityReference>) context.getEnvironment().get(Environment.SUMMON_REFERENCE_STACK));
         if (newStack != null) {
+            Stack<EntityReference> oldStack =  newStack;
             newStack = (Stack<EntityReference>) newStack.clone();
             for (int i = 0; i < newStack.size(); i++) {
-                newStack.set(i, (EntityReference) ((EntityReference) newStack.get(i)));
+                newStack.set(i, new EntityReference(oldStack.get(i).getId()));
             }
             cloneMap.remove(Environment.SUMMON_REFERENCE_STACK);
             cloneMap.put(Environment.SUMMON_REFERENCE_STACK, newStack);
@@ -120,15 +106,18 @@ public class SimulationContext implements Cloneable
 
         newStack = (Stack<EntityReference>) ((Stack<EntityReference>) context.getEnvironment().get(Environment.EVENT_TARGET_REFERENCE_STACK));
         if (newStack != null) {
+            Stack<EntityReference> oldStack =  newStack;
             newStack = (Stack<EntityReference>) newStack.clone();
             for (int i = 0; i < newStack.size(); i++) {
-                newStack.set(i, (EntityReference) ((EntityReference) newStack.get(i)));
+                newStack.set(i, new EntityReference( oldStack.get(i).getId()));
             }
             cloneMap.remove(Environment.EVENT_TARGET_REFERENCE_STACK);
             cloneMap.put(Environment.EVENT_TARGET_REFERENCE_STACK, newStack);
         }
+
         return clone;
     }
+
     public boolean gameDecided()
     {
         return context.gameDecided();
@@ -158,34 +147,16 @@ public class SimulationContext implements Cloneable
     public List<GameAction> getValidActions()
     {
         List<GameAction> actions = new ArrayList<GameAction>();
-        if (getLogic().battlecries != null) {
-            actions = getLogic().battlecries;
-            getLogic().battlecries = null;
-        } else {
-            actions = context.getValidActions();
-        }
+        actions = context.getValidActions();
         return actions;
     }
-    public SimulationLogic getLogic(){
-        return (SimulationLogic)context.getLogic();
-    }
+
     public void applyAction(int playerID, GameAction action)
     {
-        getLogic().battlecries = null;
-        context.setIsInBattleCry(false);
-
-        if(action.getActionType() == ActionType.BATTLECRY){
-            performBattlecryAction(action);
-            //System.err.println("BATTLECRY IS HAPPENING IN SIMULATION");
-        }else {
-            getLogic().simulationActive = true;
-            getLogic().performGameAction(context.getActivePlayerId(), action);
-            getLogic().simulationActive = false;
-            context.setIsInBattleCry(false);
-
-            if (action.getActionType() == ActionType.END_TURN) {
-                context.startTurn(context.getActivePlayerId());
-            }
+        //getLogic().simulationActive = true;
+        context.getLogic().performGameAction(context.getActivePlayerId(), action);
+        if (action.getActionType() == ActionType.END_TURN) {
+            context.startTurn(context.getActivePlayerId());
         }
     }
 
@@ -194,27 +165,6 @@ public class SimulationContext implements Cloneable
         context.playFromMiddle();
     }
 
-    public void performBattlecryAction(GameAction battlecry) {
-
-
-        boolean resolvedLate = getLogic().minion.getBattlecry().isResolvedLate();
-
-        getLogic().performGameAction(context.getActivePlayerId(), battlecry);
-        getLogic().checkForDeadEntities();
-
-        if (resolvedLate) {
-            getLogic().afterBattlecryLate();
-        } else {
-            getLogic().afterBattlecry();
-        }
-
-        getLogic().afterCardPlayed(context.getActivePlayerId(), getLogic().source.getCardReference());
-        context.setPendingCard(null);
-        getLogic().minion = null;
-        getLogic().resolveBattlecry = false;
-        getLogic().battlecries = null;
-
-    }
     public void play() { context.play(); }
     public GameContext getGameContext(){
         return this.context;

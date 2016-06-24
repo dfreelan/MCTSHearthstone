@@ -20,11 +20,11 @@ public class MCTSStandardNode extends MCTSNode
     IBehaviour rolloutBehavior;
     public MCTSStandardNode(IFilter actionPrune, IBehaviour rolloutBehavior) {
         super(actionPrune);
-        this.rolloutBehavior = rolloutBehavior;
+        this.rolloutBehavior = rolloutBehavior.clone();
     }
 
     public MCTSStandardNode( IBehaviour rolloutBehavior) {
-        this.rolloutBehavior = rolloutBehavior;
+        this.rolloutBehavior = rolloutBehavior.clone();
     }
 
     public MCTSStandardNode(SimulationContext current, GameAction action, List<GameAction> rootActions, IFilter actionPrune) {
@@ -37,15 +37,16 @@ public class MCTSStandardNode extends MCTSNode
     @Override
     public MCTSNode nodeFactoryMethod(SimulationContext context, GameAction possibleAction, List<GameAction> rootActions) {
         MCTSStandardNode node = new MCTSStandardNode(context,possibleAction,rootActions,actionPrune);
-        node.rolloutBehavior = this.rolloutBehavior;
+        node.rolloutBehavior = this.rolloutBehavior.clone();
         return node;
     }
 
     @Override
-    public double rollOut(MCTSNode node, List<GameAction> validActions){
-            SimulationContext simulation = node.getContext().clone();
-            simulation.setBehavior(rolloutBehavior.clone());
-            simulation.playFromMiddle();
-            return 1 - simulation.getWinningPlayerId();
+    public double rollOut(MCTSNode node, List<GameAction> validActions)
+    {
+        SimulationContext simulation = node.getContext().clone();
+        simulation.setBehavior(rolloutBehavior);
+        simulation.playFromMiddle();
+        return 1 - simulation.getWinningPlayerId();
     }
 }

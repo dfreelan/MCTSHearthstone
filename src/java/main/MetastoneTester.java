@@ -7,9 +7,14 @@ import java.nio.file.Paths;
 
 import java.util.stream.IntStream;
 
+import behaviors.MCTSCritic.MCTSNeuralNode;
+import behaviors.critic.NeuralNetworkCritic;
+import behaviors.critic.TrainConfig;
 import behaviors.heuristic.HeuristicBehavior;
 import behaviors.standardMCTS.MCTSStandardNode;
+import behaviors.util.FeatureCollector;
 import behaviors.util.Logger;
+import behaviors.util.RandomStateCollector;
 import net.demilich.metastone.game.Player;
 import net.demilich.metastone.game.behaviour.IBehaviour;
 import net.demilich.metastone.game.behaviour.PlayRandomBehaviour;
@@ -27,6 +32,16 @@ import net.demilich.metastone.gui.deckbuilder.importer.HearthPwnImporter;
 
 import behaviors.simulation.SimulationContext;
 import behaviors.MCTS.MCTSBehavior;
+import org.deeplearning4j.nn.api.OptimizationAlgorithm;
+import org.deeplearning4j.nn.conf.LearningRatePolicy;
+import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
+import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
+import org.deeplearning4j.nn.conf.Updater;
+import org.deeplearning4j.nn.conf.layers.DenseLayer;
+import org.deeplearning4j.nn.conf.layers.OutputLayer;
+import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+import org.deeplearning4j.nn.weights.WeightInit;
+import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 public class MetastoneTester
 {
@@ -57,8 +72,8 @@ public class MetastoneTester
         if(keyExists("-console", args)) {
             consoleOutput = parseBoolean(argumentForKey("-console", args));
         }
-        if(keyExists("-logfile", args)) {
-            logFile = Paths.get(argumentForKey("-logfile", args));
+        if(keyExists("-log", args)) {
+            logFile = Paths.get(argumentForKey("-log", args));
         }
         if(keyExists("-parallel", args)) {
             parallel = parseBoolean(argumentForKey("-parallel", args));
@@ -94,10 +109,6 @@ public class MetastoneTester
             exploreFactor = Integer.parseInt(argumentForKey("-explore", args));
             exploreFactor2 = exploreFactor;
         }
-        if(keyExists("-behavior", args)) {
-            String behaviorArg = argumentForKey("-behavior", args);
-            behavior = getBehavior(behaviorArg, exploreFactor, numTrees, numIterations);
-        }
         if(keyExists("-deck2", args)) {
             deckName2 = argumentForKey("-deck2", args);
         }
@@ -116,15 +127,31 @@ public class MetastoneTester
         if(keyExists("-explore2", args)) {
             exploreFactor2 = Integer.parseInt(argumentForKey("-explore2", args));
         }
-        if(keyExists("-behavior2", args)) {
-            String behavior2Arg = argumentForKey("-behavior2", args);
-            behavior2 = getBehavior(behavior2Arg, exploreFactor2, numTrees2, numIterations2);
-        }
-        new CardProxy();
 
+
+        if(logFile != null && Files.exists(logFile)) {
+            try {
+                Files.delete(logFile);
+            } catch(Exception e) {
+                e.printStackTrace();
+                throw new RuntimeException("Error deleting old log file " + logFile.toString());
+            }
+        }
+
+        new CardProxy();
         Deck deck1 = loadDeck(deckName);
         Deck deck2 = loadDeck(deckName2);
+
         SimulationContext game = createContext(deck1, deck2, behavior, behavior2);
+
+        if(keyExists("-behavior", args)) {
+            String behaviorArg = argumentForKey("-behavior", args);
+            game.getGameContext().getPlayer1().setBehaviour(getBehavior(behaviorArg, exploreFactor, numTrees, numIterations, game, game.getGameContext().getPlayer1()));
+        }
+        if(keyExists("-behavior2", args)) {
+            String behavior2Arg = argumentForKey("-behavior2", args);
+            game.getGameContext().getPlayer2().setBehaviour(getBehavior(behavior2Arg, exploreFactor2, numTrees2, numIterations2, game, game.getGameContext().getPlayer2()));
+        }
 
         if(parallel) {
             IntStream.range(0, simulations).parallel().forEach((int i) -> runSimulation(game.clone(), i));
@@ -145,7 +172,6 @@ public class MetastoneTester
         game.play();
         updateStats(game.getWinningPlayerId());
         Logger.log("Finished Simulation[" + gameNum + "], Result = " + resultString(game.getWinningPlayerId()), consoleOutput, logFile);
-        Logger.log("Current Status:", consoleOutput, logFile);
         printStats(stats, false);
     }
 
@@ -177,7 +203,7 @@ public class MetastoneTester
         stats[result + 1]++;
     }
 
-    private static IBehaviour getBehavior(String name, double exploreFactor, int numTrees, int numIterations)
+    private static IBehaviour getBehavior(String name, double exploreFactor, int numTrees, int numIterations, SimulationContext game, Player player)
     {
         switch(name.toLowerCase()) {
             case "random": return new PlayRandomBehaviour();
@@ -188,14 +214,46 @@ public class MetastoneTester
                 MCTSBehavior behavior = new MCTSBehavior(exploreFactor, numTrees, numIterations, new MCTSStandardNode(new HeuristicBehavior()));
                 behavior.setName("MCTSHeuristicBehavior");
                 return behavior;
+            case "mctsneural":
+                FeatureCollector fCollector = new FeatureCollector(game.getGameContext(), player);
+                System.err.println("THE gamecontext in the NN is" +game.toString());
+                System.err.println("numfeatures: " + fCollector.getFeatures(true, game.getGameContext(), player).length);
+
+                MultiLayerConfiguration networkConfig  = new NeuralNetConfiguration.Builder()
+                        .learningRate(1e-1).learningRateDecayPolicy(LearningRatePolicy.Inverse).lrPolicyDecayRate(1e-4).lrPolicyPower(0.75)
+                        .iterations(1000)
+                        .useDropConnect(true)
+                        .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
+                        .list(3)
+                        .layer(0, new DenseLayer.Builder().nIn(fCollector.getFeatures(true, game.getGameContext(), player).length).nOut(80)
+                                .activation("leakyrelu").momentum(0.9)
+                                .weightInit(WeightInit.XAVIER)
+                                .updater(Updater.NESTEROVS)
+                                .build())
+                        .layer(1, new DenseLayer.Builder().nIn(80).nOut(80)
+                                .activation("leakyrelu").dropOut(0.5).momentum(0.9)
+                                .weightInit(WeightInit.XAVIER)
+                                .updater(Updater.NESTEROVS)
+                                .build())
+                        .layer(2, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
+                                .weightInit(WeightInit.XAVIER).updater(Updater.SGD).momentum(0.9)
+                                .updater(Updater.NESTEROVS)
+                                .activation("tanh").weightInit(WeightInit.XAVIER)
+                                .nIn(80).nOut(1).build()).backprop(true)
+                        .build();
+
+                TrainConfig trainConfig = new TrainConfig(2, game, new RandomStateCollector(new PlayRandomBehaviour()),
+                        new MCTSBehavior(exploreFactor, numTrees, numIterations, new MCTSStandardNode(new PlayRandomBehaviour())), true);
+
+                MCTSBehavior neural = new MCTSBehavior(exploreFactor, numTrees, numIterations, new MCTSNeuralNode(new NeuralNetworkCritic(networkConfig, trainConfig, Paths.get("neural_network.dat"))));
+                neural.setName("MCTSNeuralBehavior");
+                return neural;
             default: throw new RuntimeException("Error: " + name + " behavior does not exist.");
         }
     }
 
     private static SimulationContext createContext(Deck deck1, Deck deck2, IBehaviour behavior1, IBehaviour behavior2)
     {
-        new CardProxy();
-
         DeckProxy dp = new DeckProxy();
         try {
             dp.loadDecks();
@@ -233,11 +291,16 @@ public class MetastoneTester
         String url = null;
         switch (name.toLowerCase()) {
             case "nobattlecryhunter":
-                url = "http://www.hearthpwn.com/decks/574146-no-battlecry-hunter";
+                url = "http://www.hearthpwn.com/decks/577429-midrange-hunter-no-targeted-battlecries";
                 break;
             case "controlwarrior":
                 url = "http://www.hearthpwn.com/decks/81605-breebotjr-control-warrior";
                 break;
+            case "dragon":
+                DeckProxy p = new DeckProxy();
+                try{p.loadDecks();}catch(Exception e){System.exit(123);}
+
+                return  p.getDeckByName("Dragon Warrior");
             default:
                 url = name;
         }

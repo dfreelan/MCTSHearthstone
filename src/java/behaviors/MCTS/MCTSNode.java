@@ -31,9 +31,6 @@ public abstract class  MCTSNode {
     protected IFilter actionPrune;
     private final double epsilon = 1e-6;
 
-
-
-
     public abstract MCTSNode nodeFactoryMethod(SimulationContext context, GameAction possibleAction,List<GameAction> rootActions);
 
     public MCTSNode(IFilter actionPrune){
@@ -80,14 +77,13 @@ public abstract class  MCTSNode {
         if (!cur.context.gameDecided()) {
             value = rollOut(cur, validActions);
         } else if (cur.context.getWinningPlayerId() == 0) {
-            player1Value = Double.POSITIVE_INFINITY;
+            cur.player1Value = Double.POSITIVE_INFINITY;
             value = 1;
         } else if (cur.context.getWinningPlayerId() == 1) {
-            player1Value = Double.NEGATIVE_INFINITY;
+            cur.player1Value = Double.NEGATIVE_INFINITY;
             value = 0;
         } else {
-            player1Value = 0.5;
-            value = -1;
+            value = 0.5;
         }
 
         for (MCTSNode node : visited) {
@@ -126,7 +122,6 @@ public abstract class  MCTSNode {
             context.applyAction(context.getActivePlayerId(), action);
             actions = context.getValidActions();
         } else {
-
             actions = rootActions;
             rootActions = null;
         }
