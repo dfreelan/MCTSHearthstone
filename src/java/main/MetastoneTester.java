@@ -122,15 +122,6 @@ public class MetastoneTester
         }
         new CardProxy();
 
-        DeckProxy dp = new DeckProxy();
-        try {
-            dp.loadDecks();
-        } catch(Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Error loading decks");
-        }
-
-        new DeckFormatProxy();
         Deck deck1 = loadDeck(deckName);
         Deck deck2 = loadDeck(deckName2);
         SimulationContext game = createContext(deck1, deck2, behavior, behavior2);
