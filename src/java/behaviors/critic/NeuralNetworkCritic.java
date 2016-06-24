@@ -14,6 +14,7 @@ import org.nd4j.linalg.indexing.SpecifiedIndex;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 public class NeuralNetworkCritic implements Critic
@@ -60,7 +61,7 @@ public class NeuralNetworkCritic implements Critic
         inputsArr = null;
         labelsArr = null;
 
-        network.setListeners(new TrainingIterationListener(1, true, null));
+        network.setListeners(new TrainingIterationListener(1, true, Paths.get("training_log.txt")));
         System.err.println("BEFORE TRAINING");
         network.fit(inputs, labels);
         System.err.println("AFTER TRAINING");

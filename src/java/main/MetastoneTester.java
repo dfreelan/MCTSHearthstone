@@ -33,6 +33,7 @@ import net.demilich.metastone.gui.deckbuilder.importer.HearthPwnImporter;
 import behaviors.simulation.SimulationContext;
 import behaviors.MCTS.MCTSBehavior;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
+import org.deeplearning4j.nn.conf.LearningRatePolicy;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.Updater;
@@ -219,22 +220,29 @@ public class MetastoneTester
                 System.err.println("numfeatures: " + fCollector.getFeatures(true, game.getGameContext(), player).length);
 
                 MultiLayerConfiguration networkConfig  = new NeuralNetConfiguration.Builder()
-                        .learningRate(1e-2)
-                        .iterations(100)
-
+                        .learningRate(1e-1).learningRateDecayPolicy(LearningRatePolicy.Inverse).lrPolicyDecayRate(1e-4).lrPolicyPower(0.75)
+                        .iterations(1000)
+                        .useDropConnect(true)
                         .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
-                        .list(2)
+                        .list(3)
                         .layer(0, new DenseLayer.Builder().nIn(fCollector.getFeatures(true, game.getGameContext(), player).length).nOut(80)
-                                .activation("leakyrelu").dropOut(0.5)
+                                .activation("leakyrelu").momentum(0.9)
                                 .weightInit(WeightInit.XAVIER)
+                                .updater(Updater.NESTEROVS)
                                 .build())
-                        .layer(1, new OutputLayer.Builder(LossFunctions.LossFunction.SQUARED_LOSS)
-                                .weightInit(WeightInit.XAVIER).updater(Updater.SGD)
+                        .layer(1, new DenseLayer.Builder().nIn(80).nOut(80)
+                                .activation("leakyrelu").dropOut(0.5).momentum(0.9)
+                                .weightInit(WeightInit.XAVIER)
+                                .updater(Updater.NESTEROVS)
+                                .build())
+                        .layer(2, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
+                                .weightInit(WeightInit.XAVIER).updater(Updater.SGD).momentum(0.9)
+                                .updater(Updater.NESTEROVS)
                                 .activation("tanh").weightInit(WeightInit.XAVIER)
                                 .nIn(80).nOut(1).build()).backprop(true)
                         .build();
 
-                TrainConfig trainConfig = new TrainConfig(1000, game, new RandomStateCollector(new PlayRandomBehaviour()),
+                TrainConfig trainConfig = new TrainConfig(2, game, new RandomStateCollector(new PlayRandomBehaviour()),
                         new MCTSBehavior(exploreFactor, numTrees, numIterations, new MCTSStandardNode(new PlayRandomBehaviour())), true);
 
                 MCTSBehavior neural = new MCTSBehavior(exploreFactor, numTrees, numIterations, new MCTSNeuralNode(new NeuralNetworkCritic(networkConfig, trainConfig, Paths.get("neural_network.dat"))));
