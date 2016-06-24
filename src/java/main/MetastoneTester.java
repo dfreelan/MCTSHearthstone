@@ -244,6 +244,11 @@ public class MetastoneTester
             case "controlwarrior":
                 url = "http://www.hearthpwn.com/decks/81605-breebotjr-control-warrior";
                 break;
+            case "dragon":
+                DeckProxy p = new DeckProxy();
+                try{p.loadDecks();}catch(Exception e){System.exit(123);}
+
+                return  p.getDeckByName("Dragon Warrior");
             default:
                 url = name;
         }
