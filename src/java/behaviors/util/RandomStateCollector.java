@@ -62,6 +62,6 @@ public class RandomStateCollector implements StateCollector
             }
         }
 
-        return states.get(rand.nextInt(states.size()));
+        return states.get(rand.nextInt(states.size() - 1));
     }
 }
