@@ -219,9 +219,9 @@ public class MetastoneTester
                 System.err.println("numfeatures: " + fCollector.getFeatures(true, game.getGameContext(), player).length);
 
                 MultiLayerConfiguration networkConfig  = new NeuralNetConfiguration.Builder()
-                        .learningRate(1e-1)
+                        .learningRate(1e-2)
                         .iterations(100)
-                        .learningRateScoreBasedDecayRate(1e-1)
+
                         .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                         .list(2)
                         .layer(0, new DenseLayer.Builder().nIn(fCollector.getFeatures(true, game.getGameContext(), player).length).nOut(80)
