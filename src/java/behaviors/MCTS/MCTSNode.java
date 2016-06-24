@@ -123,7 +123,6 @@ public abstract class  MCTSNode {
             context.applyAction(context.getActivePlayerId(), action);
             actions = context.getValidActions();
         } else {
-
             actions = rootActions;
             rootActions = null;
         }
