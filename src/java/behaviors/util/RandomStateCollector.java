@@ -49,6 +49,7 @@ public class RandomStateCollector implements StateCollector
     {
         List<SimulationContext> states = new ArrayList<>();
 
+        simulation.getGameContext().init();
         while (!simulation.gameDecided()) {
             simulation.getGameContext().startTurn(simulation.getActivePlayerId());
 

@@ -64,7 +64,7 @@ public final class FeatureCollector implements Cloneable {
     }
     public FeatureCollector(GameContext context, Player player) {
         context = context.clone();
-        System.err.println(" no entry means : "  + myCardMap.getNoEntryValue());
+        //System.err.println(" no entry means : "  + myCardMap.getNoEntryValue());
         player = context.getPlayer(player.getId());
         Player opponent = context.getOpponent(player);
 
@@ -77,6 +77,7 @@ public final class FeatureCollector implements Cloneable {
         //self is hand,deck,played
         for (Card card : player.getHand()) {
             int hash = card.getName().hashCode();
+            if(!card.getName().contains("The Coin"))
             if(!myCardMap.containsKey(hash)){
                 myCardMap.put(hash, featureCount);
 
@@ -89,6 +90,7 @@ public final class FeatureCollector implements Cloneable {
         }
         for (Card card : player.getDeck()){
             int hash = card.getName().hashCode();
+            if(!card.getName().contains("The Coin"))
             if(!myCardMap.containsKey(hash)){
                 myCardMap.put(hash, featureCount);
 
@@ -106,6 +108,7 @@ public final class FeatureCollector implements Cloneable {
         //data is deck,played
         for (Card card : opponent.getHand()) {
             int hash = card.getName().hashCode();
+            if(!card.getName().contains("The Coin"))
             if(!enemyCardMap.containsKey(hash)){
                 enemyCardMap.put(hash, featureCount);
 
@@ -120,6 +123,7 @@ public final class FeatureCollector implements Cloneable {
 
         for (Card card : opponent.getDeck()){
             int hash = card.getName().hashCode();
+            if(!card.getName().contains("The Coin"))
             if(!enemyCardMap.containsKey(hash)){
                 enemyCardMap.put(hash, featureCount);
 

@@ -22,7 +22,7 @@ public class TrainingIterationListener implements IterationListener
     }
 
     @Override
-    public void invoke() { invoked = false; }
+    public void invoke() { invoked = true; }
 
     @Override
     public boolean invoked() { return invoked; }
