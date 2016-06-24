@@ -2,6 +2,7 @@ package behaviors.util;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 
 public class Logger
 {
@@ -14,7 +15,7 @@ public class Logger
         }
 
         if(logFile != null) {
-            writeToFile(logFile, text);
+            writeToFile(logFile, text + "\n");
         }
     }
 
@@ -30,7 +31,7 @@ public class Logger
         }
 
         try {
-            Files.write(path, text.getBytes());
+            Files.write(path, text.getBytes(), StandardOpenOption.APPEND);
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Error writing to + " + path.toString());

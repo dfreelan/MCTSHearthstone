@@ -57,8 +57,8 @@ public class MetastoneTester
         if(keyExists("-console", args)) {
             consoleOutput = parseBoolean(argumentForKey("-console", args));
         }
-        if(keyExists("-logfile", args)) {
-            logFile = Paths.get(argumentForKey("-logfile", args));
+        if(keyExists("-log", args)) {
+            logFile = Paths.get(argumentForKey("-log", args));
         }
         if(keyExists("-parallel", args)) {
             parallel = parseBoolean(argumentForKey("-parallel", args));
@@ -120,9 +120,17 @@ public class MetastoneTester
             String behavior2Arg = argumentForKey("-behavior2", args);
             behavior2 = getBehavior(behavior2Arg, exploreFactor2, numTrees2, numIterations2);
         }
-        new CardProxy();
 
-        DeckProxy dp = new DeckProxy();
+        if(logFile != null && Files.exists(logFile)) {
+            try {
+                Files.delete(logFile);
+            } catch(Exception e) {
+                e.printStackTrace();
+                throw new RuntimeException("Error deleting old log file " + logFile.toString());
+            }
+        }
+
+        new CardProxy();
         Deck deck1 = loadDeck(deckName);
         Deck deck2 = loadDeck(deckName2);
         SimulationContext game = createContext(deck1, deck2, behavior, behavior2);
@@ -146,7 +154,6 @@ public class MetastoneTester
         game.play();
         updateStats(game.getWinningPlayerId());
         Logger.log("Finished Simulation[" + gameNum + "], Result = " + resultString(game.getWinningPlayerId()), consoleOutput, logFile);
-        Logger.log("Current Status:", consoleOutput, logFile);
         printStats(stats, false);
     }
 
@@ -195,8 +202,6 @@ public class MetastoneTester
 
     private static SimulationContext createContext(Deck deck1, Deck deck2, IBehaviour behavior1, IBehaviour behavior2)
     {
-        new CardProxy();
-
         DeckProxy dp = new DeckProxy();
         try {
             dp.loadDecks();
@@ -234,7 +239,7 @@ public class MetastoneTester
         String url = null;
         switch (name.toLowerCase()) {
             case "nobattlecryhunter":
-                url = "http://www.hearthpwn.com/decks/574146-no-battlecry-hunter";
+                url = "http://www.hearthpwn.com/decks/577429-midrange-hunter-no-targeted-battlecries";
                 break;
             case "controlwarrior":
                 url = "http://www.hearthpwn.com/decks/81605-breebotjr-control-warrior";
