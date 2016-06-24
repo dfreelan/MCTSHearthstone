@@ -65,10 +65,17 @@ public class NeuralNetworkCritic implements Critic
         System.err.println("BEFORE TRAINING");
         network.fit(inputs, labels);
         System.err.println("AFTER TRAINING");
-
+        System.err.println("error if always 0: " + getErrorIfZero(labelsArr));
         saveNetwork(network, saveLocation);
     }
+    public double getErrorIfZero(double[][] labels){
+        double sumErr =0.0;
+        for(int i = 0; i<labels.length; i++){
+            sumErr+=(0-labels[i][0])*(0-labels[i][0]);
+        }
+        return sumErr;
 
+    }
     @Override
     public double getCritique(SimulationContext context, Player pov)
     {
