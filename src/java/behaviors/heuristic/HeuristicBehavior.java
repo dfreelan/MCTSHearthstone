@@ -36,6 +36,7 @@ public class HeuristicBehavior extends Behaviour
         rand = new Random();
         actionComparator = new ActionComparator();
         heuristic = new ThreatBasedHeuristic(FeatureVector.getDefault());
+        name = new String(name);
     }
 
     public HeuristicBehavior()

@@ -77,17 +77,44 @@ public class SimulationContext implements Cloneable
     @Override
     public SimulationContext clone()
     {
-
         return new SimulationContext(context);
     }
 
-    private GameContext deepCloneContext(){
+    private GameContext deepCloneContext()
+    {
         return deepCloneContext(this.context);
-
     }
 
     private GameContext deepCloneContext(GameContext context){
         GameContext clone = context.clone();
+
+        clone.getPlayer1().setBehaviour(clone.getPlayer1().getBehaviour().clone());
+        clone.getPlayer2().setBehaviour(clone.getPlayer2().getBehaviour().clone());
+
+        HashMap cloneMap = (HashMap)clone.getEnvironment();
+
+        Stack<EntityReference> newStack = (Stack<EntityReference>) ((Stack<EntityReference>) context.getEnvironment().get(Environment.SUMMON_REFERENCE_STACK));
+        if (newStack != null) {
+            Stack<EntityReference> oldStack =  newStack;
+            newStack = (Stack<EntityReference>) newStack.clone();
+            for (int i = 0; i < newStack.size(); i++) {
+                newStack.set(i, new EntityReference(oldStack.get(i).getId()));
+            }
+            cloneMap.remove(Environment.SUMMON_REFERENCE_STACK);
+            cloneMap.put(Environment.SUMMON_REFERENCE_STACK, newStack);
+        }
+
+        newStack = (Stack<EntityReference>) ((Stack<EntityReference>) context.getEnvironment().get(Environment.EVENT_TARGET_REFERENCE_STACK));
+        if (newStack != null) {
+            Stack<EntityReference> oldStack =  newStack;
+            newStack = (Stack<EntityReference>) newStack.clone();
+            for (int i = 0; i < newStack.size(); i++) {
+                newStack.set(i, new EntityReference( oldStack.get(i).getId()));
+            }
+            cloneMap.remove(Environment.EVENT_TARGET_REFERENCE_STACK);
+            cloneMap.put(Environment.EVENT_TARGET_REFERENCE_STACK, newStack);
+        }
+
         return clone;
     }
 
@@ -124,11 +151,8 @@ public class SimulationContext implements Cloneable
         return actions;
     }
 
-
-
     public void applyAction(int playerID, GameAction action)
     {
-
         //getLogic().simulationActive = true;
         context.getLogic().performGameAction(context.getActivePlayerId(), action);
         if (action.getActionType() == ActionType.END_TURN) {
@@ -140,7 +164,6 @@ public class SimulationContext implements Cloneable
     {
         context.playFromMiddle();
     }
-
 
     public void play() { context.play(); }
     public GameContext getGameContext(){

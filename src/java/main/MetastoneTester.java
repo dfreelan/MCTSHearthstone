@@ -7,9 +7,14 @@ import java.nio.file.Paths;
 
 import java.util.stream.IntStream;
 
+import behaviors.MCTSCritic.MCTSNeuralNode;
+import behaviors.critic.NeuralNetworkCritic;
+import behaviors.critic.TrainConfig;
 import behaviors.heuristic.HeuristicBehavior;
 import behaviors.standardMCTS.MCTSStandardNode;
+import behaviors.util.FeatureCollector;
 import behaviors.util.Logger;
+import behaviors.util.RandomStateCollector;
 import net.demilich.metastone.game.Player;
 import net.demilich.metastone.game.behaviour.IBehaviour;
 import net.demilich.metastone.game.behaviour.PlayRandomBehaviour;
@@ -27,6 +32,15 @@ import net.demilich.metastone.gui.deckbuilder.importer.HearthPwnImporter;
 
 import behaviors.simulation.SimulationContext;
 import behaviors.MCTS.MCTSBehavior;
+import org.deeplearning4j.nn.api.OptimizationAlgorithm;
+import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
+import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
+import org.deeplearning4j.nn.conf.Updater;
+import org.deeplearning4j.nn.conf.layers.DenseLayer;
+import org.deeplearning4j.nn.conf.layers.OutputLayer;
+import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+import org.deeplearning4j.nn.weights.WeightInit;
+import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 public class MetastoneTester
 {
@@ -94,10 +108,6 @@ public class MetastoneTester
             exploreFactor = Integer.parseInt(argumentForKey("-explore", args));
             exploreFactor2 = exploreFactor;
         }
-        if(keyExists("-behavior", args)) {
-            String behaviorArg = argumentForKey("-behavior", args);
-            behavior = getBehavior(behaviorArg, exploreFactor, numTrees, numIterations);
-        }
         if(keyExists("-deck2", args)) {
             deckName2 = argumentForKey("-deck2", args);
         }
@@ -116,10 +126,7 @@ public class MetastoneTester
         if(keyExists("-explore2", args)) {
             exploreFactor2 = Integer.parseInt(argumentForKey("-explore2", args));
         }
-        if(keyExists("-behavior2", args)) {
-            String behavior2Arg = argumentForKey("-behavior2", args);
-            behavior2 = getBehavior(behavior2Arg, exploreFactor2, numTrees2, numIterations2);
-        }
+
 
         if(logFile != null && Files.exists(logFile)) {
             try {
@@ -133,7 +140,17 @@ public class MetastoneTester
         new CardProxy();
         Deck deck1 = loadDeck(deckName);
         Deck deck2 = loadDeck(deckName2);
+
         SimulationContext game = createContext(deck1, deck2, behavior, behavior2);
+
+        if(keyExists("-behavior", args)) {
+            String behaviorArg = argumentForKey("-behavior", args);
+            game.getGameContext().getPlayer1().setBehaviour(getBehavior(behaviorArg, exploreFactor, numTrees, numIterations, game, game.getGameContext().getPlayer1()));
+        }
+        if(keyExists("-behavior2", args)) {
+            String behavior2Arg = argumentForKey("-behavior2", args);
+            game.getGameContext().getPlayer2().setBehaviour(getBehavior(behavior2Arg, exploreFactor2, numTrees2, numIterations2, game, game.getGameContext().getPlayer2()));
+        }
 
         if(parallel) {
             IntStream.range(0, simulations).parallel().forEach((int i) -> runSimulation(game.clone(), i));
@@ -185,7 +202,7 @@ public class MetastoneTester
         stats[result + 1]++;
     }
 
-    private static IBehaviour getBehavior(String name, double exploreFactor, int numTrees, int numIterations)
+    private static IBehaviour getBehavior(String name, double exploreFactor, int numTrees, int numIterations, SimulationContext game, Player player)
     {
         switch(name.toLowerCase()) {
             case "random": return new PlayRandomBehaviour();
@@ -196,6 +213,33 @@ public class MetastoneTester
                 MCTSBehavior behavior = new MCTSBehavior(exploreFactor, numTrees, numIterations, new MCTSStandardNode(new HeuristicBehavior()));
                 behavior.setName("MCTSHeuristicBehavior");
                 return behavior;
+            case "mctsneural":
+                FeatureCollector fCollector = new FeatureCollector(game.getGameContext(), player);
+                System.err.println("THE gamecontext in the NN is" +game.toString());
+                System.err.println("numfeatures: " + fCollector.getFeatures(true, game.getGameContext(), player).length);
+
+                MultiLayerConfiguration networkConfig  = new NeuralNetConfiguration.Builder()
+                        .learningRate(1e-1)
+                        .iterations(100)
+                        .learningRateScoreBasedDecayRate(1e-1)
+                        .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
+                        .list(2)
+                        .layer(0, new DenseLayer.Builder().nIn(fCollector.getFeatures(true, game.getGameContext(), player).length).nOut(80)
+                                .activation("leakyrelu").dropOut(0.5)
+                                .weightInit(WeightInit.XAVIER)
+                                .build())
+                        .layer(1, new OutputLayer.Builder(LossFunctions.LossFunction.SQUARED_LOSS)
+                                .weightInit(WeightInit.XAVIER).updater(Updater.SGD)
+                                .activation("tanh").weightInit(WeightInit.XAVIER)
+                                .nIn(80).nOut(1).build()).backprop(true)
+                        .build();
+
+                TrainConfig trainConfig = new TrainConfig(1000, game, new RandomStateCollector(new PlayRandomBehaviour()),
+                        new MCTSBehavior(exploreFactor, numTrees, numIterations, new MCTSStandardNode(new PlayRandomBehaviour())), true);
+
+                MCTSBehavior neural = new MCTSBehavior(exploreFactor, numTrees, numIterations, new MCTSNeuralNode(new NeuralNetworkCritic(networkConfig, trainConfig, Paths.get("neural_network.dat"))));
+                neural.setName("MCTSNeuralBehavior");
+                return neural;
             default: throw new RuntimeException("Error: " + name + " behavior does not exist.");
         }
     }
