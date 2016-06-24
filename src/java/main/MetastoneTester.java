@@ -242,7 +242,7 @@ public class MetastoneTester
                                 .nIn(80).nOut(1).build()).backprop(true)
                         .build();
 
-                TrainConfig trainConfig = new TrainConfig(2, game, new RandomStateCollector(new PlayRandomBehaviour()),
+                TrainConfig trainConfig = new TrainConfig(500, game, new RandomStateCollector(new PlayRandomBehaviour()),
                         new MCTSBehavior(exploreFactor, numTrees, numIterations, new MCTSStandardNode(new PlayRandomBehaviour())), true);
 
                 MCTSBehavior neural = new MCTSBehavior(exploreFactor, numTrees, numIterations, new MCTSNeuralNode(new NeuralNetworkCritic(networkConfig, trainConfig, Paths.get("neural_network.dat"))));
