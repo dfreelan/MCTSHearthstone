@@ -152,7 +152,7 @@ public class MCTSBehavior extends Behaviour implements StateJudge
     {
         trees[treeIndex].run(numIterations / numTrees);
         MCTSNode root = trees[treeIndex].getRoot();
-        List<ActionValuePair> actionValues = root.getChildValues(root.getContext().getActivePlayerId());
+        List<ActionValuePair> actionValues = root.getChildScores(root.getContext().getActivePlayerId());
         for(ActionValuePair actionValue : actionValues) {
             int actionIndex = actionHashToIndex.get(actionHash(actionValue.action));
             accumulateStats[treeIndex][actionIndex] = actionValue.value;
