@@ -144,11 +144,15 @@ public class MetastoneTester
 
         if(keyExists("-behavior", args)) {
             String behaviorArg = argumentForKey("-behavior", args);
-            game.getGameContext().getPlayer1().setBehaviour(getBehavior(behaviorArg, exploreFactor, numTrees, numIterations, game, game.getGameContext().getPlayer1()));
+            behavior = getBehavior(behaviorArg, exploreFactor, numTrees, numIterations, game, game.getGameContext().getPlayer1());
+            game.getGameContext().getPlayer1().setBehaviour(behavior);
+            game.getGameContext().getPlayer1().setName(behavior.getName());
         }
         if(keyExists("-behavior2", args)) {
             String behavior2Arg = argumentForKey("-behavior2", args);
-            game.getGameContext().getPlayer2().setBehaviour(getBehavior(behavior2Arg, exploreFactor2, numTrees2, numIterations2, game, game.getGameContext().getPlayer2()));
+            behavior2 = getBehavior(behavior2Arg, exploreFactor2, numTrees2, numIterations2, game, game.getGameContext().getPlayer2());
+            game.getGameContext().getPlayer2().setBehaviour(behavior2);
+            game.getGameContext().getPlayer2().setName(behavior2.getName());
         }
 
         long beginGamesTime = System.nanoTime();
