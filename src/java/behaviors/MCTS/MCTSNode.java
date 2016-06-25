@@ -187,8 +187,8 @@ public abstract class  MCTSNode {
     {
         switch(playerID) {
             case 0: return player1Value;
-            case 1: return 1 - player1Value;
-            default: return -1;
+            case 1: return numVisits - player1Value;
+            default: throw new RuntimeException("Error: " + playerID + " is not a valid player ID");
         }
     }
 

@@ -59,15 +59,31 @@ public class NeuralNetworkCritic implements Critic
         INDArray labels = Nd4j.create(labelsArr);
 
         inputsArr = null;
-        labelsArr = null;
+        //labelsArr = null;
 
         network.setListeners(new TrainingIterationListener(1, true, Paths.get("training_log.txt")));
         System.err.println("BEFORE TRAINING");
         network.fit(inputs, labels);
-        System.err.println("AFTER TRAINING");
+        System.err.println("AFTER TRAINING: " + network.score());
+
+        
+
         System.err.println("error if always 0: " + getErrorIfZero(labelsArr));
         saveNetwork(network, saveLocation);
     }
+
+    private double meanSqError(INDArray inputs, INDArray labels)
+    {
+        INDArray output = network.output(inputs);
+
+        double totalSqError = 0;
+        for(int i = 0; i < labels.length(); i++) {
+            double error = labels.getDouble(i) - output.getDouble(i);
+            totalSqError += error * error;
+        }
+        return totalSqError / labels.length();
+    }
+
     public double getErrorIfZero(double[][] labels){
         double sumErr =0.0;
         for(int i = 0; i<labels.length; i++){
