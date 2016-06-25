@@ -301,6 +301,11 @@ public class MetastoneTester
                 try{p.loadDecks();}catch(Exception e){System.exit(123);}
 
                 return  p.getDeckByName("Dragon Warrior");
+            case "nobattlecryhunterOFFLINE":
+                p = new DeckProxy();
+                try{p.loadDecks();}catch(Exception e){System.exit(123);}
+
+                return  p.getDeckByName("MidRange Hunter: NO (targeted) BATTLECRIES");
             default:
                 url = name;
         }
