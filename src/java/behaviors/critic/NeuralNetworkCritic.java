@@ -19,8 +19,10 @@ import java.util.List;
 
 public class NeuralNetworkCritic implements Critic
 {
-    MultiLayerNetwork network;
-    FeatureCollector fCollector;
+    private final String trainingLogFileLocation = "training_log.txt";
+
+    private MultiLayerNetwork network;
+    private FeatureCollector fCollector;
 
     private NeuralNetworkCritic(){}
     public NeuralNetworkCritic(Path loadLocation, SimulationContext initialState)
@@ -61,7 +63,17 @@ public class NeuralNetworkCritic implements Critic
         inputsArr = null;
         //labelsArr = null;
 
-        network.setListeners(new TrainingIterationListener(1, true, Paths.get("training_log.txt")));
+        Path trainingLogFile = Paths.get(trainingLogFileLocation);
+        if(Files.exists(trainingLogFile)) {
+            try {
+                Files.delete(trainingLogFile);
+            } catch(Exception e) {
+                e.printStackTrace();
+                throw new RuntimeException("Error deleting old log file " + trainingLogFileLocation);
+            }
+        }
+
+        network.setListeners(new TrainingIterationListener(1, true, trainingLogFile));
         System.err.println("BEFORE TRAINING");
         network.fit(inputs, labels);
         System.err.println("AFTER TRAINING: " + meanSqError(inputs, labels));
