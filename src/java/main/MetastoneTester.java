@@ -228,7 +228,6 @@ public class MetastoneTester
                 MultiLayerConfiguration networkConfig  = new NeuralNetConfiguration.Builder()
                         .learningRate(1e-1).learningRateDecayPolicy(LearningRatePolicy.Inverse).lrPolicyDecayRate(1e-4).lrPolicyPower(0.75)
                         .iterations(1000).stepFunction(new NegativeDefaultStepFunction())
-
                         .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                         .list(3)
                         .layer(0, new DenseLayer.Builder().nIn(fCollector.getFeatures(true, game.getGameContext(), player).length).nOut(80)
@@ -248,8 +247,8 @@ public class MetastoneTester
                                 .nIn(80).nOut(1).build())//.backprop(true)
                         .build();
 
-                TrainConfig trainConfig = new TrainConfig(5000, game, new RandomStateCollector(new PlayRandomBehaviour()),
-                        new MCTSBehavior(exploreFactor, 10, 1000, new MCTSStandardNode(new PlayRandomBehaviour())), true);
+                TrainConfig trainConfig = new TrainConfig(50000, game, new RandomStateCollector(new PlayRandomBehaviour()),
+                        new MCTSBehavior(exploreFactor, 1, 1, new MCTSStandardNode(new PlayRandomBehaviour())), true);
 
                 MCTSBehavior neural = new MCTSBehavior(exploreFactor, numTrees, numIterations, new MCTSNeuralNode(new NeuralNetworkCritic(networkConfig, trainConfig, Paths.get("neural_network.dat"))));
                 neural.setName("MCTSNeuralBehavior");
