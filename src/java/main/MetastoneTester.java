@@ -239,11 +239,11 @@ public class MetastoneTester
                                 .weightInit(WeightInit.XAVIER).updater(Updater.SGD).momentum(0.9)
                                 .updater(Updater.NESTEROVS)
                                 .activation("tanh").weightInit(WeightInit.XAVIER)
-                                .nIn(80).nOut(1).build()).backprop(true)
+                                .nIn(80).nOut(1).build())//.backprop(true)
                         .build();
 
-                TrainConfig trainConfig = new TrainConfig(500, game, new RandomStateCollector(new PlayRandomBehaviour()),
-                        new MCTSBehavior(exploreFactor, numTrees, numIterations, new MCTSStandardNode(new PlayRandomBehaviour())), true);
+                TrainConfig trainConfig = new TrainConfig(5000, game, new RandomStateCollector(new PlayRandomBehaviour()),
+                        new MCTSBehavior(exploreFactor, 10, 1000, new MCTSStandardNode(new PlayRandomBehaviour())), true);
 
                 MCTSBehavior neural = new MCTSBehavior(exploreFactor, numTrees, numIterations, new MCTSNeuralNode(new NeuralNetworkCritic(networkConfig, trainConfig, Paths.get("neural_network.dat"))));
                 neural.setName("MCTSNeuralBehavior");

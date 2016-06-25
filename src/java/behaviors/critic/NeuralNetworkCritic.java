@@ -64,9 +64,9 @@ public class NeuralNetworkCritic implements Critic
         network.setListeners(new TrainingIterationListener(1, true, Paths.get("training_log.txt")));
         System.err.println("BEFORE TRAINING");
         network.fit(inputs, labels);
-        System.err.println("AFTER TRAINING: " + network.score());
+        System.err.println("AFTER TRAINING: " + meanSqError(inputs, labels));
 
-        
+
 
         System.err.println("error if always 0: " + getErrorIfZero(labelsArr));
         saveNetwork(network, saveLocation);
@@ -74,11 +74,12 @@ public class NeuralNetworkCritic implements Critic
 
     private double meanSqError(INDArray inputs, INDArray labels)
     {
-        INDArray output = network.output(inputs);
-
         double totalSqError = 0;
         for(int i = 0; i < labels.length(); i++) {
-            double error = labels.getDouble(i) - output.getDouble(i);
+            INDArray input = inputs.getRow(i);
+            double output = network.output(input, false).getDouble(0);
+
+            double error = labels.getDouble(i) - output;
             totalSqError += error * error;
         }
         return totalSqError / labels.length();
