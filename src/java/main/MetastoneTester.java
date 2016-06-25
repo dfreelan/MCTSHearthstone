@@ -181,6 +181,8 @@ public class MetastoneTester
         game.randomize(1);
         game.play();
         updateStats(game.getWinningPlayerId());
+        System.err.println("first play: " + game.getGameContext().getPlayer1().getBehaviour().getClass().getName());
+        System.err.println("second play: " + game.getGameContext().getPlayer2().getBehaviour().getClass().getName());
         Logger.log("Finished Simulation[" + gameNum + "], Result = " + resultString(game.getWinningPlayerId()), consoleOutput, logFile);
         printStats(stats, false);
     }
@@ -232,17 +234,16 @@ public class MetastoneTester
                 MCTSBehavior neural = null;
                 if(loadNetworkFile == null) {
                     MultiLayerConfiguration networkConfig = new NeuralNetConfiguration.Builder()
-                            .learningRate(1e-1).learningRateDecayPolicy(LearningRatePolicy.Inverse).lrPolicyDecayRate(1e-4).lrPolicyPower(0.75)
+                            .learningRate(1e-2).learningRateDecayPolicy(LearningRatePolicy.Inverse).lrPolicyDecayRate(1e-4).lrPolicyPower(0.75)
                             .iterations(1000).stepFunction(new NegativeDefaultStepFunction())
-
                             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                             .list(3)
-                            .layer(0, new DenseLayer.Builder().nIn(fCollector.getFeatures(true, game.getGameContext(), player).length).nOut(80)
+                            .layer(0, new DenseLayer.Builder().nIn(fCollector.getFeatures(true, game.getGameContext(), player).length).nOut(160)
                                     .activation("leakyrelu").momentum(0.9)
                                     .weightInit(WeightInit.XAVIER)
                                     .updater(Updater.NESTEROVS)
                                     .build())
-                            .layer(1, new DenseLayer.Builder().nIn(80).nOut(80)
+                            .layer(1, new DenseLayer.Builder().nIn(160).nOut(80)
                                     .activation("leakyrelu").dropOut(0.5).momentum(0.9)
                                     .weightInit(WeightInit.XAVIER)
                                     .updater(Updater.NESTEROVS)
@@ -255,7 +256,7 @@ public class MetastoneTester
                             .build();
 
                     TrainConfig trainConfig = new TrainConfig(5000, game, new RandomStateCollector(new PlayRandomBehaviour()),
-                            new MCTSBehavior(exploreFactor, 10, 1000, new MCTSStandardNode(new PlayRandomBehaviour())), true);
+                            new MCTSBehavior(exploreFactor, 4, 40, new MCTSStandardNode(new PlayRandomBehaviour())), true);
 
                     neural = new MCTSBehavior(exploreFactor, numTrees, numIterations, new MCTSNeuralNode(new NeuralNetworkCritic(networkConfig, trainConfig, Paths.get("neural_network.dat"))));
                 } else {

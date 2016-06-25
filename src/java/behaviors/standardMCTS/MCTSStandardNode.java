@@ -44,6 +44,7 @@ public class MCTSStandardNode extends MCTSNode
     @Override
     public double rollOut(MCTSNode node, List<GameAction> validActions)
     {
+        //System.err.println("heyyo, listen what i sayyo");
         SimulationContext simulation = node.getContext().clone();
         simulation.setBehavior(rolloutBehavior);
         simulation.playFromMiddle();

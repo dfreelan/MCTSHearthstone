@@ -71,7 +71,7 @@ public class MCTSBehavior extends Behaviour implements StateJudge
         if(validActions.size() == 1) {
             return validActions.get(0);
         }
-
+        gameContext = gameContext.clone();
         MCTSTree[] trees = new MCTSTree[numTrees];
         double[][] accumulateStats = new double[numTrees][];
 
