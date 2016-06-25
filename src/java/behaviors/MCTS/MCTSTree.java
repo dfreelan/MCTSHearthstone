@@ -23,7 +23,7 @@ public class MCTSTree
         for(int i = 0; i < iterations; i++) {
             root.step(exploreFactor);
         }
-        return root.getChildValues(root.getContext().getActivePlayerId());
+        return root.getChildScores(root.getContext().getActivePlayerId());
     }
 
     public MCTSNode getRoot() { return root; }

@@ -47,7 +47,6 @@ public class MCTSNeuralNode extends MCTSNode {
     public double rollOut(MCTSNode node, List<GameAction> validActions){
 
         SimulationContext simulation = node.getContext().clone();
-
         double value = critic.getCritique(simulation,simulation.getActivePlayer());
         if(simulation.getActivePlayerId() == 1){
             value = 1-value;

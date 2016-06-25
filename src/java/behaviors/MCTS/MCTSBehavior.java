@@ -32,6 +32,12 @@ public class MCTSBehavior extends Behaviour implements StateJudge
     private String name = "MCTSBehavior";
     private MCTSNode template;
 
+    @Override
+    public MCTSBehavior clone(){
+        MCTSBehavior clone = new MCTSBehavior(exploreFactor,numTrees,numIterations,template);
+        clone.setName(new String(name));
+        return clone;
+    }
     public MCTSBehavior(double exploreFactor, int numTrees, int numIterations, MCTSNode template)
     {
         super();
