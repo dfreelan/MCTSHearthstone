@@ -58,6 +58,7 @@ public class MetastoneTester
         long beginTime = System.nanoTime();
         stats = new double[5];
 
+        Path loadNetworkFile = null;
         boolean parallel = true;
         int simulations = 1;
 
@@ -78,6 +79,9 @@ public class MetastoneTester
         }
         if(keyExists("-log", args)) {
             logFile = Paths.get(argumentForKey("-log", args));
+        }
+        if(keyExists("-loadnetwork", args)) {
+            loadNetworkFile = Paths.get(argumentForKey("-loadnetwork", args));
         }
         if(keyExists("-parallel", args)) {
             parallel = parseBoolean(argumentForKey("-parallel", args));
@@ -147,13 +151,13 @@ public class MetastoneTester
 
         if(keyExists("-behavior", args)) {
             String behaviorArg = argumentForKey("-behavior", args);
-            behavior = getBehavior(behaviorArg, exploreFactor, numTrees, numIterations, game, game.getGameContext().getPlayer1());
+            behavior = getBehavior(behaviorArg, exploreFactor, numTrees, numIterations, game, game.getGameContext().getPlayer1(), loadNetworkFile);
             game.getGameContext().getPlayer1().setBehaviour(behavior);
             game.getGameContext().getPlayer1().setName(behavior.getName());
         }
         if(keyExists("-behavior2", args)) {
             String behavior2Arg = argumentForKey("-behavior2", args);
-            behavior2 = getBehavior(behavior2Arg, exploreFactor2, numTrees2, numIterations2, game, game.getGameContext().getPlayer2());
+            behavior2 = getBehavior(behavior2Arg, exploreFactor2, numTrees2, numIterations2, game, game.getGameContext().getPlayer2(), loadNetworkFile);
             game.getGameContext().getPlayer2().setBehaviour(behavior2);
             game.getGameContext().getPlayer2().setName(behavior2.getName());
         }
@@ -209,7 +213,7 @@ public class MetastoneTester
         stats[result + 1]++;
     }
 
-    private static IBehaviour getBehavior(String name, double exploreFactor, int numTrees, int numIterations, SimulationContext game, Player player)
+    private static IBehaviour getBehavior(String name, double exploreFactor, int numTrees, int numIterations, SimulationContext game, Player player, Path loadNetworkFile)
     {
         switch(name.toLowerCase()) {
             case "random": return new PlayRandomBehaviour();
@@ -222,35 +226,42 @@ public class MetastoneTester
                 return behavior;
             case "mctsneural":
                 FeatureCollector fCollector = new FeatureCollector(game.getGameContext(), player);
-                System.err.println("THE gamecontext in the NN is" +game.toString());
+                System.err.println("THE gamecontext in the NN is" + game.toString());
                 System.err.println("numfeatures: " + fCollector.getFeatures(true, game.getGameContext(), player).length);
 
-                MultiLayerConfiguration networkConfig  = new NeuralNetConfiguration.Builder()
-                        .learningRate(1e-1).learningRateDecayPolicy(LearningRatePolicy.Inverse).lrPolicyDecayRate(1e-4).lrPolicyPower(0.75)
-                        .iterations(1000).stepFunction(new NegativeDefaultStepFunction())
-                        .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
-                        .list(3)
-                        .layer(0, new DenseLayer.Builder().nIn(fCollector.getFeatures(true, game.getGameContext(), player).length).nOut(80)
-                                .activation("leakyrelu").momentum(0.9)
-                                .weightInit(WeightInit.XAVIER)
-                                .updater(Updater.NESTEROVS)
-                                .build())
-                        .layer(1, new DenseLayer.Builder().nIn(80).nOut(80)
-                                .activation("leakyrelu").dropOut(0.5).momentum(0.9)
-                                .weightInit(WeightInit.XAVIER)
-                                .updater(Updater.NESTEROVS)
-                                .build())
-                        .layer(2, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
-                                .weightInit(WeightInit.XAVIER).updater(Updater.SGD).momentum(0.9)
-                                .updater(Updater.NESTEROVS)
-                                .activation("tanh").weightInit(WeightInit.XAVIER)
-                                .nIn(80).nOut(1).build())//.backprop(true)
-                        .build();
+                MCTSBehavior neural = null;
+                if(loadNetworkFile == null) {
+                    MultiLayerConfiguration networkConfig = new NeuralNetConfiguration.Builder()
+                            .learningRate(1e-1).learningRateDecayPolicy(LearningRatePolicy.Inverse).lrPolicyDecayRate(1e-4).lrPolicyPower(0.75)
+                            .iterations(1000).stepFunction(new NegativeDefaultStepFunction())
 
-                TrainConfig trainConfig = new TrainConfig(50000, game, new RandomStateCollector(new PlayRandomBehaviour()),
-                        new MCTSBehavior(exploreFactor, 1, 1, new MCTSStandardNode(new PlayRandomBehaviour())), true);
+                            .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
+                            .list(3)
+                            .layer(0, new DenseLayer.Builder().nIn(fCollector.getFeatures(true, game.getGameContext(), player).length).nOut(80)
+                                    .activation("leakyrelu").momentum(0.9)
+                                    .weightInit(WeightInit.XAVIER)
+                                    .updater(Updater.NESTEROVS)
+                                    .build())
+                            .layer(1, new DenseLayer.Builder().nIn(80).nOut(80)
+                                    .activation("leakyrelu").dropOut(0.5).momentum(0.9)
+                                    .weightInit(WeightInit.XAVIER)
+                                    .updater(Updater.NESTEROVS)
+                                    .build())
+                            .layer(2, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
+                                    .weightInit(WeightInit.XAVIER).updater(Updater.SGD).momentum(0.9)
+                                    .updater(Updater.NESTEROVS)
+                                    .activation("tanh").weightInit(WeightInit.XAVIER)
+                                    .nIn(80).nOut(1).build())//.backprop(true)
+                            .build();
 
-                MCTSBehavior neural = new MCTSBehavior(exploreFactor, numTrees, numIterations, new MCTSNeuralNode(new NeuralNetworkCritic(networkConfig, trainConfig, Paths.get("neural_network.dat"))));
+                    TrainConfig trainConfig = new TrainConfig(5000, game, new RandomStateCollector(new PlayRandomBehaviour()),
+                            new MCTSBehavior(exploreFactor, 10, 1000, new MCTSStandardNode(new PlayRandomBehaviour())), true);
+
+                    neural = new MCTSBehavior(exploreFactor, numTrees, numIterations, new MCTSNeuralNode(new NeuralNetworkCritic(networkConfig, trainConfig, Paths.get("neural_network.dat"))));
+                } else {
+                    neural = new MCTSBehavior(exploreFactor, numTrees, numIterations, new MCTSNeuralNode(new NeuralNetworkCritic(loadNetworkFile, game)));
+                }
+
                 neural.setName("MCTSNeuralBehavior");
                 return neural;
             default: throw new RuntimeException("Error: " + name + " behavior does not exist.");

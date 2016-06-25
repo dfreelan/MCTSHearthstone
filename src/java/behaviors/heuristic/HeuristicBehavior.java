@@ -118,7 +118,7 @@ public class HeuristicBehavior extends Behaviour
                 currIndex++;
             }
 
-            if (rand.nextBoolean() || actionGroup.getActionType().equals(ActionType.BATTLECRY)) {
+            if (rand.nextBoolean() || actionGroup.getActionType().equals(ActionType.BATTLECRY) || category == summons) {
                 List<GameAction> actions = category.get(actionGroup);
                 GameAction action = actions.get(rand.nextInt(actions.size()));
 
