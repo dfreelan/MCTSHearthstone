@@ -78,9 +78,6 @@ public class MetastoneTester
         if(keyExists("-parallel", args)) {
             parallel = parseBoolean(argumentForKey("-parallel", args));
         }
-        if(keyExists("-parallel", args)) {
-            parallel = parseBoolean(argumentForKey("-parallel", args));
-        }
         if(keyExists("-simulations", args)) {
             simulations = Integer.parseInt(argumentForKey("-simulations", args));
             if(simulations < 1) {
@@ -153,6 +150,7 @@ public class MetastoneTester
             game.getGameContext().getPlayer2().setBehaviour(getBehavior(behavior2Arg, exploreFactor2, numTrees2, numIterations2, game, game.getGameContext().getPlayer2()));
         }
 
+        long beginGamesTime = System.nanoTime();
         if(parallel) {
             IntStream.range(0, simulations).parallel().forEach((int i) -> runSimulation(game.clone(), i));
         } else {
@@ -160,7 +158,7 @@ public class MetastoneTester
         }
 
         stats[3] = (System.nanoTime() - beginTime) / 1e9;
-        stats[4] = stats[3] / simulations;
+        stats[4] = (System.nanoTime() - beginGamesTime) / 1e9 / simulations;
 
         printStats(stats, true);
     }
