@@ -141,7 +141,10 @@ public class SimulationContext implements Cloneable
     public void setBehavior(IBehaviour behavior)
     {
         context.getPlayer1().setBehaviour(behavior.clone());
+        context.getPlayer1().setName(behavior.getName());
+
         context.getPlayer2().setBehaviour(behavior.clone());
+        context.getPlayer2().setName(behavior.getName());
     }
 
     public List<GameAction> getValidActions()
