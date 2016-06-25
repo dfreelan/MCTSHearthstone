@@ -168,7 +168,7 @@ public abstract class  MCTSNode {
         if(context.getActivePlayerId() == 0) {
             return player1Value / (numVisits + epsilon);
         } else {
-            return (1 - player1Value) / (numVisits + epsilon);
+            return (numVisits - player1Value) / (numVisits + epsilon);
         }
     }
 
