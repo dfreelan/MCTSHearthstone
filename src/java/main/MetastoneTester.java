@@ -234,16 +234,16 @@ public class MetastoneTester
                 MCTSBehavior neural = null;
                 if(loadNetworkFile == null) {
                     MultiLayerConfiguration networkConfig = new NeuralNetConfiguration.Builder()
-                            .learningRate(1e-2).learningRateDecayPolicy(LearningRatePolicy.Inverse).lrPolicyDecayRate(1e-4).lrPolicyPower(0.75)
+                            .learningRate(1e-1).learningRateDecayPolicy(LearningRatePolicy.Inverse).lrPolicyDecayRate(1e-4).lrPolicyPower(0.75)
                             .iterations(1000).stepFunction(new NegativeDefaultStepFunction())
                             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                             .list(3)
-                            .layer(0, new DenseLayer.Builder().nIn(fCollector.getFeatures(true, game.getGameContext(), player).length).nOut(160)
+                            .layer(0, new DenseLayer.Builder().nIn(fCollector.getFeatures(true, game.getGameContext(), player).length).nOut(80)
                                     .activation("leakyrelu").momentum(0.9)
                                     .weightInit(WeightInit.XAVIER)
                                     .updater(Updater.NESTEROVS)
                                     .build())
-                            .layer(1, new DenseLayer.Builder().nIn(160).nOut(80)
+                            .layer(1, new DenseLayer.Builder().nIn(80).nOut(80)
                                     .activation("leakyrelu").dropOut(0.5).momentum(0.9)
                                     .weightInit(WeightInit.XAVIER)
                                     .updater(Updater.NESTEROVS)
@@ -252,7 +252,7 @@ public class MetastoneTester
                                     .weightInit(WeightInit.XAVIER).updater(Updater.SGD).momentum(0.9)
                                     .updater(Updater.NESTEROVS)
                                     .activation("tanh").weightInit(WeightInit.XAVIER)
-                                    .nIn(80).nOut(1).build())//.backprop(true)
+                                    .nIn(80).nOut(1).build()).backprop(true)
                             .build();
 
                     TrainConfig trainConfig = new TrainConfig(5000, game, new RandomStateCollector(new PlayRandomBehaviour()),
