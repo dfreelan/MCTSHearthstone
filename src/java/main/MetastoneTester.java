@@ -240,11 +240,12 @@ public class MetastoneTester
                                 .weightInit(WeightInit.XAVIER).updater(Updater.SGD).momentum(0.9)
                                 .updater(Updater.NESTEROVS)
                                 .activation("tanh").weightInit(WeightInit.XAVIER)
-                                .nIn(80).nOut(1).build()).backprop(true)
+                                .nIn(80).nOut(1).build())//.backprop(true)
                         .build();
 
                 TrainConfig trainConfig = new TrainConfig(5000, game, new RandomStateCollector(new PlayRandomBehaviour()),
-                        new MCTSBehavior(exploreFactor, numTrees, numIterations, new MCTSStandardNode(new PlayRandomBehaviour())), true);
+                        new MCTSBehavior(exploreFactor, 10, 1000, new MCTSStandardNode(new PlayRandomBehaviour())), true);
+
                 MCTSBehavior neural = new MCTSBehavior(exploreFactor, numTrees, numIterations, new MCTSNeuralNode(new NeuralNetworkCritic(networkConfig, trainConfig, Paths.get("neural_network.dat"))));
                 neural.setName("MCTSNeuralBehavior");
                 return neural;
@@ -254,7 +255,6 @@ public class MetastoneTester
 
     private static SimulationContext createContext(Deck deck1, Deck deck2, IBehaviour behavior1, IBehaviour behavior2)
     {
-        new CardProxy();
         DeckProxy dp = new DeckProxy();
         try {
             dp.loadDecks();
@@ -302,14 +302,10 @@ public class MetastoneTester
                 try{p.loadDecks();}catch(Exception e){System.exit(123);}
 
                 return  p.getDeckByName("Dragon Warrior");
-            case "nobattlecryhunteroffline":
+            case "nobattlecryhunterOFFLINE":
                 p = new DeckProxy();
                 try{p.loadDecks();}catch(Exception e){System.exit(123);}
-                System.err.println("tryin this");
-                List<Deck> allDecks = p.getDecks();
-                for(Deck blah : allDecks){
-                    System.err.println("deckname:" + blah.getName());
-                }
+
                 return  p.getDeckByName("MidRange Hunter: NO (targeted) BATTLECRIES");
             default:
                 url = name;
