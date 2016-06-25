@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import java.util.List;
 import java.util.stream.IntStream;
 
 import behaviors.MCTSCritic.MCTSNeuralNode;
@@ -242,9 +243,8 @@ public class MetastoneTester
                                 .nIn(80).nOut(1).build()).backprop(true)
                         .build();
 
-                TrainConfig trainConfig = new TrainConfig(500, game, new RandomStateCollector(new PlayRandomBehaviour()),
+                TrainConfig trainConfig = new TrainConfig(5000, game, new RandomStateCollector(new PlayRandomBehaviour()),
                         new MCTSBehavior(exploreFactor, numTrees, numIterations, new MCTSStandardNode(new PlayRandomBehaviour())), true);
-
                 MCTSBehavior neural = new MCTSBehavior(exploreFactor, numTrees, numIterations, new MCTSNeuralNode(new NeuralNetworkCritic(networkConfig, trainConfig, Paths.get("neural_network.dat"))));
                 neural.setName("MCTSNeuralBehavior");
                 return neural;
@@ -254,6 +254,7 @@ public class MetastoneTester
 
     private static SimulationContext createContext(Deck deck1, Deck deck2, IBehaviour behavior1, IBehaviour behavior2)
     {
+        new CardProxy();
         DeckProxy dp = new DeckProxy();
         try {
             dp.loadDecks();
@@ -301,10 +302,14 @@ public class MetastoneTester
                 try{p.loadDecks();}catch(Exception e){System.exit(123);}
 
                 return  p.getDeckByName("Dragon Warrior");
-            case "nobattlecryhunterOFFLINE":
+            case "nobattlecryhunteroffline":
                 p = new DeckProxy();
                 try{p.loadDecks();}catch(Exception e){System.exit(123);}
-
+                System.err.println("tryin this");
+                List<Deck> allDecks = p.getDecks();
+                for(Deck blah : allDecks){
+                    System.err.println("deckname:" + blah.getName());
+                }
                 return  p.getDeckByName("MidRange Hunter: NO (targeted) BATTLECRIES");
             default:
                 url = name;
