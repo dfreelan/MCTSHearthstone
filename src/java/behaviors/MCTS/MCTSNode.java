@@ -172,12 +172,12 @@ public abstract class  MCTSNode {
         }
     }
 
-    public List<ActionValuePair> getChildValues(int playerID)
+    public List<ActionValuePair> getChildScores(int playerID)
     {
         List<ActionValuePair> childValues = new ArrayList<>();
         if(children != null) {
             for (MCTSNode child : children) {
-                childValues.add(new ActionValuePair(child.action, child.getValue(playerID)));
+                childValues.add(new ActionValuePair(child.action, child.getValue(playerID)/child.getNumVisits()));
             }
         }
         return childValues;

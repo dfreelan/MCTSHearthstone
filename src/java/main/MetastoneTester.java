@@ -40,6 +40,9 @@ import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.Updater;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
+import org.deeplearning4j.nn.conf.stepfunctions.DefaultStepFunction;
+import org.deeplearning4j.nn.conf.stepfunctions.NegativeDefaultStepFunction;
+import org.deeplearning4j.nn.conf.stepfunctions.StepFunction;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
@@ -224,8 +227,8 @@ public class MetastoneTester
 
                 MultiLayerConfiguration networkConfig  = new NeuralNetConfiguration.Builder()
                         .learningRate(1e-1).learningRateDecayPolicy(LearningRatePolicy.Inverse).lrPolicyDecayRate(1e-4).lrPolicyPower(0.75)
-                        .iterations(1000)
-                        .useDropConnect(true)
+                        .iterations(1000).stepFunction(new NegativeDefaultStepFunction())
+
                         .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                         .list(3)
                         .layer(0, new DenseLayer.Builder().nIn(fCollector.getFeatures(true, game.getGameContext(), player).length).nOut(80)
