@@ -33,6 +33,7 @@ import net.demilich.metastone.gui.deckbuilder.importer.HearthPwnImporter;
 import behaviors.simulation.SimulationContext;
 import behaviors.MCTS.MCTSBehavior;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
+import org.deeplearning4j.nn.conf.LearningRatePolicy;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.Updater;
@@ -219,7 +220,7 @@ public class MetastoneTester
                 System.err.println("numfeatures: " + fCollector.getFeatures(true, game.getGameContext(), player).length);
 
                 MultiLayerConfiguration networkConfig  = new NeuralNetConfiguration.Builder()
-                        .learningRate(1e-2)
+                        .learningRate(1e-2).learningRateDecayPolicy(LearningRatePolicy.Inverse).lrPolicyDecayRate(.0001).lrPolicyPower(.75)
                         .iterations(100)
 
                         .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
