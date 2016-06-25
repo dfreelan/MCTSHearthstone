@@ -14,6 +14,7 @@ import org.nd4j.linalg.indexing.SpecifiedIndex;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 public class NeuralNetworkCritic implements Critic
@@ -60,14 +61,21 @@ public class NeuralNetworkCritic implements Critic
         inputsArr = null;
         labelsArr = null;
 
-        network.setListeners(new TrainingIterationListener(1, true, null));
+        network.setListeners(new TrainingIterationListener(1, true, Paths.get("training_log.txt")));
         System.err.println("BEFORE TRAINING");
         network.fit(inputs, labels);
         System.err.println("AFTER TRAINING");
-
+        System.err.println("error if always 0: " + getErrorIfZero(labelsArr));
         saveNetwork(network, saveLocation);
     }
+    public double getErrorIfZero(double[][] labels){
+        double sumErr =0.0;
+        for(int i = 0; i<labels.length; i++){
+            sumErr+=(0-labels[i][0])*(0-labels[i][0]);
+        }
+        return sumErr;
 
+    }
     @Override
     public double getCritique(SimulationContext context, Player pov)
     {
