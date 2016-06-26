@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import behaviors.util.BehaviorConfig;
 import behaviors.util.StateJudge;
 import net.demilich.metastone.game.GameContext;
 import net.demilich.metastone.game.Player;
@@ -35,7 +36,7 @@ public class MCTSBehavior extends Behaviour implements StateJudge
     @Override
     public MCTSBehavior clone(){
         MCTSBehavior clone = new MCTSBehavior(exploreFactor,numTrees,numIterations,template);
-        clone.setName(new String(name));
+        clone.setName(name);
         return clone;
     }
     public MCTSBehavior(double exploreFactor, int numTrees, int numIterations, MCTSNode template)
@@ -61,6 +62,10 @@ public class MCTSBehavior extends Behaviour implements StateJudge
         };
 
         this.template = template;
+    }
+    public MCTSBehavior(BehaviorConfig behaviorConfig, MCTSNode template)
+    {
+        this(behaviorConfig.exploreFactor, behaviorConfig.numTrees, behaviorConfig.numIterations, template);
     }
 
 

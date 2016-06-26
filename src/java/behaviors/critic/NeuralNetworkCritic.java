@@ -99,14 +99,14 @@ public class NeuralNetworkCritic implements Critic
         return totalSqError / labels.length();
     }
 
-    public double getErrorIfZero(double[][] labels){
-        double sumErr =0.0;
-        for(int i = 0; i<labels.length; i++){
-            sumErr+=(0-labels[i][0])*(0-labels[i][0]);
+    private double getErrorIfZero(double[][] labels){
+        double sumErr = 0.0;
+        for(int i = 0; i < labels.length; i++){
+            sumErr += (0-labels[i][0]) * (0-labels[i][0]);
         }
-        return sumErr;
-
+        return sumErr / labels.length;
     }
+
     @Override
     public double getCritique(SimulationContext context, Player pov)
     {

@@ -1,0 +1,88 @@
+package behaviors.util;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+public class BehaviorConfig
+{
+    private int playerId;
+    
+    public int numTrees;
+    public int numIterations;
+    public double exploreFactor;
+    
+    public Path loadNetworkFile;
+    public Path networkConfigFile;
+    
+    public String deckName;
+    
+    public BehaviorConfig(int playerId)
+    {
+        if(playerId != 0 && playerId != 1) {
+            throw new RuntimeException("Error: " + playerId + " is not a valid player ID");
+        }
+
+        this.playerId = playerId;
+        
+        numTrees = 20;
+        numIterations = 10000;
+        exploreFactor = 1.4;
+        
+        loadNetworkFile = null;
+        networkConfigFile = null;
+        
+        deckName = "nobattlecryhunter";
+    }
+    
+    public void applyArguments(String[] args)
+    {
+        String playerIndicator = "";
+        if(playerId == 1) {
+            playerIndicator = "2";
+        }
+
+        if(ArgumentUtils.keyExists("-trees" + playerIndicator, args)) {
+            numTrees = Integer.parseInt(ArgumentUtils.argumentForKey("-trees" + playerIndicator, args));
+            if(numTrees < 1) {
+                throw new RuntimeException("Error: there must be at least one tree.");
+            }
+        }
+        if(ArgumentUtils.keyExists("-iterations" + playerIndicator, args)) {
+            numIterations = Integer.parseInt(ArgumentUtils.argumentForKey("-iterations" + playerIndicator, args));
+            if(numIterations < 1) {
+                throw new RuntimeException("Error: there must be at least one iteration.");
+            }
+        }
+        if(ArgumentUtils.keyExists("-explore" + playerIndicator, args)) {
+            exploreFactor = Integer.parseInt(ArgumentUtils.argumentForKey("-explore" + playerIndicator, args));
+        }
+        if(ArgumentUtils.keyExists("-loadnetwork" + playerIndicator, args)) {
+            loadNetworkFile = Paths.get(ArgumentUtils.argumentForKey("-loadnetwork" + playerIndicator, args));
+            if(!Files.exists(loadNetworkFile)) {
+                throw new RuntimeException("Error: " + loadNetworkFile.toString() + " does not exist");
+            }
+        }
+        if(ArgumentUtils.keyExists("-networkconfig" + playerIndicator, args)) {
+            networkConfigFile = Paths.get(ArgumentUtils.argumentForKey("-networkconfig" + playerIndicator, args));
+            if(!Files.exists(networkConfigFile)) {
+                throw new RuntimeException("Error: " + networkConfigFile.toString() + " does not exist");
+            }
+        }
+        if(ArgumentUtils.keyExists("-deck" + playerIndicator, args)) {
+            deckName = ArgumentUtils.argumentForKey("-deck" + playerIndicator, args);
+        }
+    }
+    
+    public void copyTo(BehaviorConfig other)
+    {
+        other.numTrees = numTrees;
+        other.numIterations = numIterations;
+        other.exploreFactor = exploreFactor;
+    
+        other.loadNetworkFile = loadNetworkFile;
+        other.networkConfigFile = networkConfigFile;
+    
+        other.deckName = deckName;
+    }
+}
