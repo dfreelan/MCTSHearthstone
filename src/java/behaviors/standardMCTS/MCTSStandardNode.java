@@ -23,7 +23,7 @@ public class MCTSStandardNode extends MCTSNode
         this.rolloutBehavior = rolloutBehavior.clone();
     }
 
-    public MCTSStandardNode( IBehaviour rolloutBehavior) {
+    public MCTSStandardNode(IBehaviour rolloutBehavior) {
         this.rolloutBehavior = rolloutBehavior.clone();
     }
 
