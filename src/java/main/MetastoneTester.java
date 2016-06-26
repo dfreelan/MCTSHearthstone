@@ -155,11 +155,15 @@ public class MetastoneTester
 
     private static IBehaviour getBehavior(String name, BehaviorConfig behaviorConfig, SimulationContext game, Player player)
     {
-        switch(name.toLowerCase()) {
-            case "random": return new PlayRandomBehaviour();
-            case "heuristic": return new HeuristicBehavior();
-            case "gamestate": return new GameStateValueBehaviour();
-            case "mcts": return new MCTSBehavior(behaviorConfig, new MCTSStandardNode(new PlayRandomBehaviour()));
+        switch (name.toLowerCase()) {
+            case "random":
+                return new PlayRandomBehaviour();
+            case "heuristic":
+                return new HeuristicBehavior();
+            case "gamestate":
+                return new GameStateValueBehaviour();
+            case "mcts":
+                return new MCTSBehavior(behaviorConfig, new MCTSStandardNode(new PlayRandomBehaviour()));
             case "mctsheuristic":
                 MCTSBehavior behavior = new MCTSBehavior(behaviorConfig, new MCTSStandardNode(new HeuristicBehavior()));
                 behavior.setName("MCTSHeuristicBehavior");
@@ -168,7 +172,7 @@ public class MetastoneTester
                 System.err.println("THE gamecontext in the NN is" + game.toString());
 
                 MultiLayerConfiguration networkConfig;
-                if(behaviorConfig.networkConfigFile == null) {
+                if (behaviorConfig.networkConfigFile == null) {
                     networkConfig = defaultNetworkConfig(game, player);
                 } else {
                     //TODO: load config from .json file
@@ -176,20 +180,23 @@ public class MetastoneTester
                 }
 
                 MCTSBehavior neural = null;
-                if(behaviorConfig.loadNetworkFile == null) {
+                if (behaviorConfig.loadNetworkFile == null) {
 
                     TrainConfig trainConfig = new TrainConfig(5000, game, new RandomStateCollector(new PlayRandomBehaviour()),
-                            new MCTSBehavior(exploreFactor, 4, 400, new MCTSStandardNode(new PlayRandomBehaviour())), true);
+                            new MCTSBehavior(behaviorConfig, new MCTSStandardNode(new PlayRandomBehaviour())), true);
 
-                    neural = new MCTSBehavior(exploreFactor, numTrees, numIterations, new MCTSNeuralNode(new NeuralNetworkCritic(networkConfig, trainConfig, Paths.get("neural_network.dat"))));
+                    neural = new MCTSBehavior(behaviorConfig, new MCTSNeuralNode(new NeuralNetworkCritic(networkConfig, trainConfig, Paths.get("neural_network.dat"))));
                 } else {
-                    neural = new MCTSBehavior(exploreFactor, numTrees, numIterations, new MCTSNeuralNode(new NeuralNetworkCritic(loadNetworkFile, game)));
+                    neural = new MCTSBehavior(behaviorConfig, new MCTSNeuralNode(new NeuralNetworkCritic(behaviorConfig.loadNetworkFile, game)));
                 }
 
                 neural.setName("MCTSNeuralBehavior");
                 return neural;
-            default: throw new RuntimeException("Error: " + name + " behavior does not exist.");
+            default:
+                throw new RuntimeException("Error: " + name + " behavior does not exist.");
         }
+    }
+
 
     private static MultiLayerConfiguration defaultNetworkConfig(SimulationContext game, Player player)
     {
@@ -287,7 +294,3 @@ public class MetastoneTester
         return deck;
     }
 }
-
-/*
-
- */
