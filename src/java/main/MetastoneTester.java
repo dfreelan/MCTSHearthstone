@@ -67,7 +67,7 @@ public class MetastoneTester
         BehaviorConfig behaviorConfig2 = new BehaviorConfig(1);
 
         behaviorConfig1.applyArguments(args);
-        behaviorConfig1.copyTo(behaviorConfig1);
+        behaviorConfig1.copyTo(behaviorConfig2);
 
         behaviorConfig2.applyArguments(args);
 
@@ -83,14 +83,14 @@ public class MetastoneTester
         new CardProxy();
         Deck deck1 = loadDeck(behaviorConfig1.deckName);
         Deck deck2 = loadDeck(behaviorConfig2.deckName);
-        IBehaviour behavior = new MCTSBehavior(behaviorConfig1, new MCTSStandardNode(new PlayRandomBehaviour()));
+        IBehaviour behavior1 = new MCTSBehavior(behaviorConfig1, new MCTSStandardNode(new PlayRandomBehaviour()));
         IBehaviour behavior2 = new PlayRandomBehaviour();
-        SimulationContext game = createContext(deck1, deck2, behavior, behavior2);
+        SimulationContext game = createContext(deck1, deck2, behavior1, behavior2);
 
         if(ArgumentUtils.keyExists("-behavior", args)) {
-            String behaviorArg = ArgumentUtils.argumentForKey("-behavior", args);
-            behavior = getBehavior(behaviorArg, behaviorConfig1, game, game.getGameContext().getPlayer1());
-            game.getGameContext().getPlayer1().setBehaviour(behavior);
+            String behavior1Arg = ArgumentUtils.argumentForKey("-behavior", args);
+            behavior1 = getBehavior(behavior1Arg, behaviorConfig1, game, game.getGameContext().getPlayer1());
+            game.getGameContext().getPlayer1().setBehaviour(behavior1);
         }
         if(ArgumentUtils.keyExists("-behavior2", args)) {
             String behavior2Arg = ArgumentUtils.argumentForKey("-behavior2", args);
@@ -98,7 +98,7 @@ public class MetastoneTester
             game.getGameContext().getPlayer2().setBehaviour(behavior2);
         }
 
-        game.getGameContext().getPlayer1().setName(behavior.getName());
+        game.getGameContext().getPlayer1().setName(behavior1.getName());
         game.getGameContext().getPlayer2().setName(behavior2.getName());
 
         long beginGamesTime = System.nanoTime();
@@ -237,6 +237,9 @@ public class MetastoneTester
 
         p1Config.build();
         p2Config.build();
+
+        System.err.println("P2Config: " + p2Config);
+        System.err.println("Deck2: " + deck2);
 
         p1Config.setHeroCard(MetaHero.getHeroCard(deck1.getHeroClass()));
         p2Config.setHeroCard(MetaHero.getHeroCard(deck2.getHeroClass()));

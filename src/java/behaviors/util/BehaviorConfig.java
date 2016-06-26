@@ -32,7 +32,7 @@ public class BehaviorConfig
         loadNetworkFile = null;
         networkConfigFile = null;
         
-        deckName = "nobattlecryhunteroffline";
+        deckName = "nobattlecryhunter";
     }
     
     public void applyArguments(String[] args)
