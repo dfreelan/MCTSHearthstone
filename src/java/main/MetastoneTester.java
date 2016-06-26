@@ -239,7 +239,7 @@ public class MetastoneTester
                             .regularization(true)
                             .l1(1e-1).l2(2e-4).useDropConnect(true)
                             .miniBatch(true)
-                            .optimizationAlgo(OptimizationAlgorithm.LINE_GRADIENT_DESCENT)
+                            .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                             .list(3)
                             .layer(0, new DenseLayer.Builder().nIn(fCollector.getFeatures(true, game.getGameContext(), player).length).nOut(80)
                                     .activation("leakyrelu").momentum(0.9)
