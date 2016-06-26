@@ -236,7 +236,10 @@ public class MetastoneTester
                     MultiLayerConfiguration networkConfig = new NeuralNetConfiguration.Builder()
                             .learningRate(1e-1).learningRateDecayPolicy(LearningRatePolicy.Inverse).lrPolicyDecayRate(1e-4).lrPolicyPower(0.75)
                             .iterations(1000).stepFunction(new NegativeDefaultStepFunction())
-                            .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
+                            .regularization(true)
+                            .l1(1e-1).l2(2e-4).useDropConnect(true)
+                            .miniBatch(true)
+                            .optimizationAlgo(OptimizationAlgorithm.LINE_GRADIENT_DESCENT)
                             .list(3)
                             .layer(0, new DenseLayer.Builder().nIn(fCollector.getFeatures(true, game.getGameContext(), player).length).nOut(80)
                                     .activation("leakyrelu").momentum(0.9)
@@ -244,19 +247,19 @@ public class MetastoneTester
                                     .updater(Updater.NESTEROVS)
                                     .build())
                             .layer(1, new DenseLayer.Builder().nIn(80).nOut(80)
-                                    .activation("leakyrelu").dropOut(0.5).momentum(0.9)
+                                    .activation("leakyrelu").momentum(0.9)
                                     .weightInit(WeightInit.XAVIER)
                                     .updater(Updater.NESTEROVS)
                                     .build())
                             .layer(2, new OutputLayer.Builder(LossFunctions.LossFunction.MSE)
-                                    .weightInit(WeightInit.XAVIER).updater(Updater.SGD).momentum(0.9)
+                                    .weightInit(WeightInit.XAVIER).momentum(0.9)
                                     .updater(Updater.NESTEROVS)
                                     .activation("tanh").weightInit(WeightInit.XAVIER)
-                                    .nIn(80).nOut(1).build()).backprop(true)
+                                    .nIn(80).nOut(1).build()).backprop(true).pretrain((true))
                             .build();
 
                     TrainConfig trainConfig = new TrainConfig(5000, game, new RandomStateCollector(new PlayRandomBehaviour()),
-                            new MCTSBehavior(exploreFactor, 4, 40, new MCTSStandardNode(new PlayRandomBehaviour())), true);
+                            new MCTSBehavior(exploreFactor, 4, 400, new MCTSStandardNode(new PlayRandomBehaviour())), true);
 
                     neural = new MCTSBehavior(exploreFactor, numTrees, numIterations, new MCTSNeuralNode(new NeuralNetworkCritic(networkConfig, trainConfig, Paths.get("neural_network.dat"))));
                 } else {
