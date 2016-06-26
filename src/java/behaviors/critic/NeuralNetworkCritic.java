@@ -53,7 +53,7 @@ public class NeuralNetworkCritic implements Critic
 
             labelsArr[index] = new double[1];
             labelsArr[index][0] = trainConfig.judge.evaluate(state, state.getActivePlayer())*2.0-1.0;
-            if(labelsArr[index][0] < -1 || labelsArr[index][0] > 1){
+            if(labelsArr[index][0] < -1.00001 || labelsArr[index][0] > 1.00001){
                 throw new RuntimeException(("invalid label " + labelsArr[index][0]));
             }
             index++;
