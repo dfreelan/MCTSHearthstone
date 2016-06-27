@@ -186,12 +186,15 @@ public class MetastoneTester
 
                 MCTSBehavior neural = null;
                 if (behaviorConfig.loadNetworkFile == null) {
-
+                    BehaviorConfig defaultJudgeConfig = new BehaviorConfig(player.getId());
+                    defaultJudgeConfig.numTrees=4;
+                    defaultJudgeConfig.numIterations=40;
                     TrainConfig trainConfig = new TrainConfig(5000, game, new RandomStateCollector(new PlayRandomBehaviour()),
-                            new MCTSBehavior(behaviorConfig, new MCTSStandardNode(new PlayRandomBehaviour())), true);
+                            new MCTSBehavior(defaultJudgeConfig, new MCTSStandardNode(new PlayRandomBehaviour())), true);
 
                     neural = new MCTSBehavior(behaviorConfig, new MCTSNeuralNode(new NeuralNetworkCritic(networkConfig, trainConfig, Paths.get("neural_network.dat"))));
                 } else {
+
                     neural = new MCTSBehavior(behaviorConfig, new MCTSNeuralNode(new NeuralNetworkCritic(behaviorConfig.loadNetworkFile, game)));
                 }
 
@@ -212,7 +215,7 @@ public class MetastoneTester
                 .regularization(true)
                 .l1(1e-1).l2(2e-4).useDropConnect(true)
                 .miniBatch(true)
-                .optimizationAlgo(OptimizationAlgorithm.LINE_GRADIENT_DESCENT)
+                .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                 .list(3)
                 .layer(0, new DenseLayer.Builder().nIn(fCollector.getFeatures(true, game.getGameContext(), player).length).nOut(80)
                         .activation("leakyrelu").momentum(0.9)
@@ -228,8 +231,9 @@ public class MetastoneTester
                         .weightInit(WeightInit.XAVIER).momentum(0.9)
                         .updater(Updater.NESTEROVS)
                         .activation("tanh").weightInit(WeightInit.XAVIER)
-                        .nIn(80).nOut(1).build()).backprop(true).pretrain((true))
+                        .nIn(80).nOut(1).build()).backprop(true).pretrain((false))
                 .build();
+
 
         return networkConfig;
     }
