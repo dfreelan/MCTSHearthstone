@@ -11,6 +11,7 @@ import java.util.stream.IntStream;
 
 import behaviors.DummyBehavior;
 import behaviors.MCTSCritic.MCTSNeuralNode;
+import behaviors.critic.NestedNeuralNetworkCritic;
 import behaviors.critic.NeuralNetworkCritic;
 import behaviors.critic.POVMode;
 import behaviors.critic.TrainConfig;
@@ -209,8 +210,8 @@ public class MetastoneTester
                 MCTSBehavior neural = null;
                 if (behaviorConfig.loadNetworkFile == null) {
                     BehaviorConfig defaultJudgeConfig = new BehaviorConfig(player.getId());
-                    defaultJudgeConfig.numTrees=4;
-                    defaultJudgeConfig.numIterations=4;
+                    defaultJudgeConfig.numTrees=8;
+                    defaultJudgeConfig.numIterations=8;
                     TrainConfig trainConfig = new TrainConfig(50000, game, new RandomStateCollector(new PlayRandomBehaviour()),
                             new MCTSBehavior(defaultJudgeConfig, new MCTSStandardNode(new PlayRandomBehaviour())), true);
 
@@ -218,6 +219,23 @@ public class MetastoneTester
                 } else {
                     neural = new MCTSBehavior(behaviorConfig, new MCTSNeuralNode(new NeuralNetworkCritic(behaviorConfig.loadNetworkFile, game), behaviorConfig.povMode));
                 }
+
+                neural.setName("MCTSNeuralBehavior");
+                return neural;
+            case "mctsneuralnested":
+                neural = null;
+                networkConfig = defaultNetworkConfig(game, player);
+                BehaviorConfig defaultJudgeConfig = new BehaviorConfig(player.getId());
+                defaultJudgeConfig.numTrees=4;
+                defaultJudgeConfig.numIterations=400;
+
+                TrainConfig trainConfig = new TrainConfig(25000, game, new RandomStateCollector(new PlayRandomBehaviour()),
+                        new MCTSBehavior(defaultJudgeConfig, new MCTSStandardNode(new PlayRandomBehaviour())), true);
+
+                trainConfig.nestAmount = 10;
+
+                neural = new MCTSBehavior(behaviorConfig, new MCTSNeuralNode(new NestedNeuralNetworkCritic(networkConfig, trainConfig, behaviorConfig.saveNetworkFile,defaultJudgeConfig), behaviorConfig.povMode));
+
 
                 neural.setName("MCTSNeuralBehavior");
                 return neural;
