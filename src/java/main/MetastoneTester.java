@@ -331,7 +331,7 @@ public class MetastoneTester
             } catch(Exception e) {
                 throw new RuntimeException("Error loading decks");
             }
-            deck = p.getDeckByName("Dragon Warrior");
+            deck = p.getDeckByName(name);
         }
 
         return deck;
