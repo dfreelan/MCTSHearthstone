@@ -183,8 +183,8 @@ public class MetastoneTester
                 if (behaviorConfig.loadNetworkFile == null) {
                     BehaviorConfig defaultJudgeConfig = new BehaviorConfig(player.getId());
                     defaultJudgeConfig.numTrees=4;
-                    defaultJudgeConfig.numIterations=40;
-                    TrainConfig trainConfig = new TrainConfig(5000, game, new RandomStateCollector(new PlayRandomBehaviour()),
+                    defaultJudgeConfig.numIterations=4;
+                    TrainConfig trainConfig = new TrainConfig(50000, game, new RandomStateCollector(new PlayRandomBehaviour()),
                             new MCTSBehavior(defaultJudgeConfig, new MCTSStandardNode(new PlayRandomBehaviour())), true);
 
                     neural = new MCTSBehavior(behaviorConfig, new MCTSNeuralNode(new NeuralNetworkCritic(networkConfig, trainConfig, Paths.get("neural_network.dat"))));
