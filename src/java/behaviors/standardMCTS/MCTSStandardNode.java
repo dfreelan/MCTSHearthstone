@@ -48,6 +48,11 @@ public class MCTSStandardNode extends MCTSNode
         SimulationContext simulation = node.getContext().clone();
         simulation.setBehavior(rolloutBehavior);
         simulation.playFromMiddle();
-        return 1 - simulation.getWinningPlayerId();
+
+        if(simulation.getWinningPlayerId() == 0 || simulation.getWinningPlayerId() == 1) {
+            return 1 - simulation.getWinningPlayerId();
+        } else {
+            return 0.5;
+        }
     }
 }

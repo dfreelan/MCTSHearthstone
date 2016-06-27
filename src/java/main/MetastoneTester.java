@@ -107,6 +107,12 @@ public class MetastoneTester
         game.getGameContext().getPlayer2().setName(behavior2.getName());
 
         long beginGamesTime = System.nanoTime();
+
+        System.err.println("Actual p1 behavior: " + game.getGameContext().getPlayer1().getBehaviour().getClass().getName());
+        System.err.println("Actual p2 behavior: " + game.getGameContext().getPlayer2().getBehaviour().getClass().getName());
+        System.err.println("Named p1 behavior: " + game.getGameContext().getPlayer1().getBehaviour().getName());
+        System.err.println("Named p2 behavior: " + game.getGameContext().getPlayer2().getBehaviour().getName());
+
         if(globalConfig.parallel) {
             IntStream.range(0, globalConfig.simulations).parallel().forEach((int i) -> runSimulation(game.clone(), i, globalConfig));
         } else {
@@ -204,7 +210,6 @@ public class MetastoneTester
                 throw new RuntimeException("Error: " + name + " behavior does not exist.");
         }
     }
-
 
     private static MultiLayerConfiguration defaultNetworkConfig(SimulationContext game, Player player)
     {
