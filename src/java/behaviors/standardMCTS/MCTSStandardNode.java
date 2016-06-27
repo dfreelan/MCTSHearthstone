@@ -7,7 +7,7 @@ import java.util.Random;
 
 import behaviors.MCTS.MCTSNode;
 import net.demilich.metastone.game.actions.GameAction;
-
+import net.demilich.metastone.game.Player;
 
 import behaviors.simulation.SimulationContext;
 import behaviors.util.IFilter;
@@ -28,14 +28,14 @@ public class MCTSStandardNode extends MCTSNode
     }
 
     public MCTSStandardNode(SimulationContext current, GameAction action, List<GameAction> rootActions, IFilter actionPrune) {
-        super(current, action, rootActions, actionPrune);
+        super(current, action, rootActions, null, actionPrune);
         //System.err.println("rolloutBehavior is " + rolloutBehavior);
         if(rolloutBehavior!=null)
             this.context.setBehavior(rolloutBehavior);
     }
 
     @Override
-    public MCTSNode nodeFactoryMethod(SimulationContext context, GameAction possibleAction, List<GameAction> rootActions) {
+    public MCTSNode nodeFactoryMethod(SimulationContext context, GameAction possibleAction, List<GameAction> rootActions, Player rootPlayer) {
         MCTSStandardNode node = new MCTSStandardNode(context,possibleAction,rootActions,actionPrune);
         node.rolloutBehavior = this.rolloutBehavior.clone();
         return node;

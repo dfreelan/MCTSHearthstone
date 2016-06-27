@@ -2,6 +2,7 @@ package behaviors.critic;
 
 import behaviors.simulation.SimulationContext;
 import behaviors.util.FeatureCollector;
+import behaviors.util.StateJudge;
 import net.demilich.metastone.game.GameContext;
 import net.demilich.metastone.game.Player;
 import org.deeplearning4j.nn.api.Layer;
@@ -9,6 +10,7 @@ import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.SpecifiedIndex;
 
@@ -20,6 +22,7 @@ import java.util.List;
 public class NeuralNetworkCritic implements Critic
 {
     private final String trainingLogFileLocation = "training_log.txt";
+    //private final int MAX_TRAINING_STATES =
 
     private MultiLayerNetwork network;
     private FeatureCollector fCollector;
@@ -37,33 +40,14 @@ public class NeuralNetworkCritic implements Critic
         network.init();
 
         List<SimulationContext> states = trainConfig.collector.collectStates(trainConfig.numStates, trainConfig.initialState, trainConfig.parallel);
-        double[][] inputsArr = new double[trainConfig.numStates][];
-        double[][] labelsArr = new double[trainConfig.numStates][];
+        int trainingStates = (int)(trainConfig.numStates * 0.9);
+        int testingStates = trainConfig.numStates - trainingStates;
+
 
         GameContext context = trainConfig.initialState.getGameContext();
         System.err.println("Context is: " + context);
         fCollector = new FeatureCollector(context, context.getPlayer1());
-
         System.err.println("NumFeatures in NNCritic: " + fCollector.getFeatures(true, context, context.getPlayer1()).length);
-        int index = 0;
-        while(!states.isEmpty()) {
-            SimulationContext state = states.remove(states.size() - 1);
-
-            inputsArr[index] = fCollector.getFeatures(true, state.getGameContext(), state.getActivePlayer());
-
-            labelsArr[index] = new double[1];
-            labelsArr[index][0] = trainConfig.judge.evaluate(state, state.getActivePlayer())*2.0-1.0;
-            if(labelsArr[index][0] < -1.00001 || labelsArr[index][0] > 1.00001){
-                throw new RuntimeException(("invalid label " + labelsArr[index][0]));
-            }
-            index++;
-        }
-
-        INDArray inputs = Nd4j.create(inputsArr);
-        INDArray labels = Nd4j.create(labelsArr);
-
-        inputsArr = null;
-        //labelsArr = null;
 
         Path trainingLogFile = Paths.get(trainingLogFileLocation);
         if(Files.exists(trainingLogFile)) {
@@ -75,15 +59,39 @@ public class NeuralNetworkCritic implements Critic
             }
         }
 
+
         network.setListeners(new TrainingIterationListener(1, true, trainingLogFile));
-        System.err.println("BEFORE TRAINING");
-        network.fit(inputs, labels);
-        System.err.println("AFTER TRAINING: " + meanSqError(inputs, labels));
+        DataSet trainingData = getDataSet(states, trainingStates, fCollector, trainConfig.judge);
+        network.fit(trainingData);
+        System.err.println("Training Error: " + meanSqError(trainingData.getFeatures(), trainingData.getLabels()));
 
+        DataSet testingData = getDataSet(states, testingStates, fCollector, trainConfig.judge);
+        System.err.println("Testing Error: " + meanSqError(testingData.getFeatures(), testingData.getLabels()));
 
-
-        System.err.println("error if always 0: " + getErrorIfZero(labelsArr));
+        System.err.println("error if always 0: " + getErrorIfZero(trainingData.getLabels()));
         saveNetwork(network, saveLocation);
+    }
+
+    private DataSet getDataSet(List<SimulationContext> states, int statesToUse, FeatureCollector fCollector, StateJudge judge)
+    {
+        double[][] inputsArr = new double[statesToUse][];
+        double[][] labelsArr = new double[statesToUse][];
+
+        for(int i = 0; i < statesToUse; i++) {
+            SimulationContext state = states.remove(states.size() - 1);
+
+            inputsArr[i] = fCollector.getFeatures(true, state.getGameContext(), state.getActivePlayer());
+
+            labelsArr[i] = new double[1];
+            labelsArr[i][0] = judge.evaluate(state, state.getActivePlayer()) * 2.0 - 1.0;
+            if(labelsArr[i][0] < -1.00001 || labelsArr[i][0] > 1.00001){
+                throw new RuntimeException(("Error: invalid label " + labelsArr[i][0]));
+            }
+        }
+
+        INDArray inputs = Nd4j.create(inputsArr);
+        INDArray labels = Nd4j.create(labelsArr);
+        return new DataSet(inputs, labels);
     }
 
     private double meanSqError(INDArray inputs, INDArray labels)
@@ -99,12 +107,13 @@ public class NeuralNetworkCritic implements Critic
         return totalSqError / labels.length();
     }
 
-    private double getErrorIfZero(double[][] labels){
+    private double getErrorIfZero(INDArray labels)
+    {
         double sumErr = 0.0;
-        for(int i = 0; i < labels.length; i++){
-            sumErr += (0-labels[i][0]) * (0-labels[i][0]);
+        for(int i = 0; i < labels.length(); i++){
+            sumErr += (0 - labels.getDouble(i)) * (0 - labels.getDouble(i));
         }
-        return sumErr / labels.length;
+        return sumErr / labels.length();
     }
 
     @Override

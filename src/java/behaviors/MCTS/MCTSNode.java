@@ -3,6 +3,7 @@ package behaviors.MCTS;
 import behaviors.simulation.SimulationContext;
 import behaviors.util.ActionValuePair;
 import behaviors.util.IFilter;
+import net.demilich.metastone.game.Player;
 import net.demilich.metastone.game.actions.ActionType;
 import net.demilich.metastone.game.actions.GameAction;
 import net.demilich.metastone.game.actions.PlayCardAction;
@@ -28,12 +29,13 @@ public abstract class  MCTSNode {
     protected List<MCTSNode> children;
     protected Random rand;
     protected List<GameAction> rootActions;
+    protected Player rootPlayer;
 
 
     protected IFilter actionPrune;
     private final double epsilon = 1e-6;
 
-    public abstract MCTSNode nodeFactoryMethod(SimulationContext context, GameAction possibleAction,List<GameAction> rootActions);
+    public abstract MCTSNode nodeFactoryMethod(SimulationContext context, GameAction possibleAction, List<GameAction> rootActions, Player rootPlayer);
 
     public MCTSNode(IFilter actionPrune){
         this.actionPrune = actionPrune;
@@ -44,10 +46,11 @@ public abstract class  MCTSNode {
         };
     }
 
-    public MCTSNode(SimulationContext current, GameAction action, List<GameAction> rootActions, IFilter actionPrune)
+    public MCTSNode(SimulationContext current, GameAction action, List<GameAction> rootActions, Player rootPlayer, IFilter actionPrune)
     {
         this(current, action,actionPrune);
         this.rootActions = rootActions;
+        this.rootPlayer = rootPlayer;
 
     }
 
@@ -131,7 +134,7 @@ public abstract class  MCTSNode {
         if(!context.gameDecided()) {
             for (GameAction possibleAction : actions) {
                 if (!actionPrune.prune(context, possibleAction)) {
-                    MCTSNode child = nodeFactoryMethod(context, possibleAction,null);
+                    MCTSNode child = nodeFactoryMethod(context, possibleAction, null, rootPlayer);
                     if (children == null) {
                         children = new LinkedList<>();
                     }
@@ -167,11 +170,8 @@ public abstract class  MCTSNode {
 
     public double getExploit(int activePlayer)
     {
-        if(activePlayer == 0) {
-            return player1Value / (numVisits + epsilon);
-        } else {
-            return (numVisits - player1Value) / (numVisits + epsilon);
-        }
+        return getValue(activePlayer) / (numVisits + epsilon);
+
     }
 
     public List<ActionValuePair> getChildScores(int playerID)
