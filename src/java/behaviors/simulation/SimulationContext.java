@@ -10,12 +10,9 @@ import net.demilich.metastone.game.GameContext;
 import net.demilich.metastone.game.Player;
 import net.demilich.metastone.game.actions.ActionType;
 import net.demilich.metastone.game.actions.GameAction;
-import net.demilich.metastone.game.actions.PlayCardAction;
 import net.demilich.metastone.game.behaviour.IBehaviour;
 import net.demilich.metastone.game.cards.Card;
 import net.demilich.metastone.game.decks.DeckFormat;
-import net.demilich.metastone.game.entities.Entity;
-import net.demilich.metastone.game.entities.minions.Minion;
 import net.demilich.metastone.game.logic.GameLogic;
 import net.demilich.metastone.game.targeting.EntityReference;
 
@@ -28,13 +25,14 @@ public class SimulationContext implements Cloneable
         context.getLogic().setLoggingEnabled(false);
         GameContext clonedContext = deepCloneContext(context);
         clonedContext.getLogic().setLoggingEnabled(false);
-        if(! (clonedContext.getPlayer1().getDeck() instanceof SimulationCardCollection)) {
+        if(!(clonedContext.getPlayer1().getDeck() instanceof SimulationCardCollection)) {
             //change the decks to use deterministic versions of the decks
             clonedContext.getPlayer1().setDeck(new SimulationCardCollection(clonedContext.getPlayer1().getDeck()));
             clonedContext.getPlayer2().setDeck(new SimulationCardCollection(clonedContext.getPlayer2().getDeck()));
         }
         this.context = clonedContext;
-   }
+    }
+
     public SimulationContext(GameContext context, GameAction previousAction) {
         this(context);
     }
@@ -47,8 +45,8 @@ public class SimulationContext implements Cloneable
     }
 
     //shuffle deck and make a random hand for my opponent
-    public void randomize(int playerID) {
-
+    public void randomize(int playerID)
+    {
         //figure out who my opponent is
         Player opponent;
         if (playerID == 0) {
@@ -56,6 +54,7 @@ public class SimulationContext implements Cloneable
         } else {
             opponent = context.getPlayer1();
         }
+
         //discard his entire hand into his deck
         opponent.getDeck().addAll(opponent.getHand());
         int handSize = opponent.getHand().getCount();
@@ -63,6 +62,7 @@ public class SimulationContext implements Cloneable
             Card card = opponent.getHand().get(0);
             context.getLogic().removeCard(opponent.getId(), card);
         }
+
         //shuffle both decks
         context.getPlayer2().getDeck().shuffle();
         context.getPlayer1().getDeck().shuffle();
@@ -85,7 +85,8 @@ public class SimulationContext implements Cloneable
         return deepCloneContext(this.context);
     }
 
-    private GameContext deepCloneContext(GameContext context){
+    private GameContext deepCloneContext(GameContext context)
+    {
         GameContext clone = context.clone();
 
         clone.getPlayer1().setBehaviour(clone.getPlayer1().getBehaviour().clone());
@@ -169,12 +170,14 @@ public class SimulationContext implements Cloneable
     }
 
     public void play() { context.play(); }
+
     public GameContext getGameContext(){
         return this.context;
     }
+
     @Override
-    public String toString(){
-        System.err.println("SIMULATION CONTEXT:");
-        return context.toString();
+    public String toString()
+    {
+        return "Simulation Context: " + context.toString();
     }
 }

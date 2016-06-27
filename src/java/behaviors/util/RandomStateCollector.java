@@ -2,7 +2,6 @@ package behaviors.util;
 
 import behaviors.simulation.SimulationContext;
 import net.demilich.metastone.game.behaviour.IBehaviour;
-import net.demilich.metastone.game.behaviour.PlayRandomBehaviour;
 import net.demilich.metastone.game.logic.GameLogic;
 
 import java.util.ArrayList;

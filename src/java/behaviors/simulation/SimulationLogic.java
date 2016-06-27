@@ -10,7 +10,6 @@ import net.demilich.metastone.game.entities.Actor;
 import net.demilich.metastone.game.entities.Entity;
 import net.demilich.metastone.game.entities.minions.Minion;
 import net.demilich.metastone.game.events.BoardChangedEvent;
-import net.demilich.metastone.game.events.GameEvent;
 import net.demilich.metastone.game.events.SummonEvent;
 import net.demilich.metastone.game.logic.GameLogic;
 import net.demilich.metastone.game.targeting.EntityReference;
@@ -19,37 +18,36 @@ import net.demilich.metastone.game.targeting.TargetSelection;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by dfreelan on 6/16/16.
- */
-public class SimulationLogic extends GameLogic {
-    int playerId;
+public class SimulationLogic extends GameLogic
+{
+    private int playerId;
     public Minion minion;
     public Card source;
-    int index;
+    private int index;
     public boolean resolveBattlecry;
     public boolean simulationActive = false;
     public ArrayList<GameAction> battlecries = null;
     public boolean battlecryRequest = false;
     public boolean rolloutActive;
 
-    public SimulationLogic(GameLogic parent) {
+    public SimulationLogic(GameLogic parent)
+    {
         super(parent.getIdFactory().clone());
         super.setLoggingEnabled(false);
 
         this.setContext((parent.getGameContext()));
     }
 
-    public void afterBattlecryLate() {
+    public void afterBattlecryLate()
+    {
         handleEnrage(minion);
         this.getGameContext().getSummonReferenceStack().pop();
         this.getGameContext().fireGameEvent(new BoardChangedEvent(this.getGameContext()));
     }
 
-    public void afterBattlecry() {
+    public void afterBattlecry()
+    {
         Player player = this.getGameContext().getPlayer(playerId);
-
-
 
         if (getGameContext().getEnvironment().get(Environment.TRANSFORM_REFERENCE) != null) {
             minion = (Minion) getGameContext().resolveSingleTarget((EntityReference) getGameContext().getEnvironment().get(Environment.TRANSFORM_REFERENCE));
@@ -74,7 +72,6 @@ public class SimulationLogic extends GameLogic {
             addManaModifier(player, minion.getCardCostModifier(), minion);
         }
 
-
         handleEnrage(minion);
 
         this.getGameContext().getSummonReferenceStack().pop();
@@ -82,8 +79,8 @@ public class SimulationLogic extends GameLogic {
     }
 
     @Override
-
-public boolean summon(int playerId, Minion minion, Card source, int index, boolean resolveBattlecry) {
+    public boolean summon(int playerId, Minion minion, Card source, int index, boolean resolveBattlecry)
+    {
 		Player player = getGameContext().getPlayer(playerId);
 		if (!canSummonMoreMinions(player)) {
 			//log("{} cannot summon any more minions, {} is destroyed", player.getName(), minion);
@@ -161,8 +158,10 @@ public boolean summon(int playerId, Minion minion, Card source, int index, boole
         getGameContext().fireGameEvent(new BoardChangedEvent(getGameContext()));
 		return true;
 	}
+
     @Override
-    public void performGameAction(int playerId, GameAction action) {
+    public void performGameAction(int playerId, GameAction action)
+    {
         if (playerId != getGameContext().getActivePlayerId()) {
             logger.warn("Player {} tries to perform an action, but it is not his turn!", getGameContext().getPlayer(playerId).getName());
         }
@@ -185,7 +184,8 @@ public boolean summon(int playerId, Minion minion, Card source, int index, boole
     }
 
     @Override
-    protected void resolveBattlecry(int playerId, Actor actor) {
+    protected void resolveBattlecry(int playerId, Actor actor)
+    {
         BattlecryAction battlecry = actor.getBattlecry();
         Player player = getGameContext().getPlayer(playerId);
         if (!battlecry.canBeExecuted(getGameContext(), player)) {
@@ -227,8 +227,10 @@ public boolean summon(int playerId, Minion minion, Card source, int index, boole
         }
         checkForDeadEntities();
     }
+
     @Override
-    public SimulationLogic clone() {
+    public SimulationLogic clone()
+    {
         //System.err.println("we are calling the correct clone");
         SimulationLogic clone = new SimulationLogic(this);
         clone.playerId = this.playerId;
@@ -245,6 +247,7 @@ public boolean summon(int playerId, Minion minion, Card source, int index, boole
         return clone;
     }
 }
+
 /*if (simulationActive) {
 
                 this.battlecries = (ArrayList<GameAction>) battlecryActions;

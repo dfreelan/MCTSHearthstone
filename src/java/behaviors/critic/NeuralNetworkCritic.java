@@ -42,7 +42,6 @@ public class NeuralNetworkCritic implements Critic
         int trainingStates = (int)(trainConfig.numStates * 0.9);
         int testingStates = trainConfig.numStates - trainingStates;
 
-
         GameContext context = trainConfig.initialState.getGameContext();
         System.err.println("Context is: " + context);
         fCollector = new FeatureCollector(context, context.getPlayer1());
@@ -58,7 +57,6 @@ public class NeuralNetworkCritic implements Critic
             }
         }
 
-
         network.setListeners(new TrainingIterationListener(1, true, trainingLogFile));
         DataSet trainingData = getDataSet(states, trainingStates, fCollector, trainConfig.judge);
         network.fit(trainingData);
@@ -67,7 +65,7 @@ public class NeuralNetworkCritic implements Critic
         DataSet testingData = getDataSet(states, testingStates, fCollector, trainConfig.judge);
         System.err.println("Testing Error: " + meanSqError(testingData.getFeatures(), testingData.getLabels()));
 
-        System.err.println("error if always 0: " + getErrorIfZero(trainingData.getLabels()));
+        System.err.println("Error if always 0: " + getErrorIfZero(trainingData.getLabels()));
         saveNetwork(network, saveLocation);
     }
 
@@ -153,12 +151,13 @@ public class NeuralNetworkCritic implements Critic
             throw new RuntimeException("Error saving NN to " + saveLocation.toString());
         }
     }
+
     @Override
-    public Critic clone(){
+    public Critic clone()
+    {
         NeuralNetworkCritic clone = new NeuralNetworkCritic();
         clone.network = this.network.clone();
         clone.fCollector = fCollector.clone();
-
         return clone;
     }
 }

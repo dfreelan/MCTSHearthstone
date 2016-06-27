@@ -14,15 +14,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
-/**
- * Created by dfreelan on 6/22/16.
- */
-public abstract class  MCTSNode {
-    
-
+public abstract class  MCTSNode
+{
     protected double player1Value;
     protected double numVisits;
-
 
     protected SimulationContext context;
     protected GameAction action;
@@ -30,7 +25,6 @@ public abstract class  MCTSNode {
     protected Random rand;
     protected List<GameAction> rootActions;
     protected Player rootPlayer;
-
 
     protected IFilter actionPrune;
     private final double epsilon = 1e-6;
@@ -40,7 +34,9 @@ public abstract class  MCTSNode {
     public MCTSNode(IFilter actionPrune){
         this.actionPrune = actionPrune;
     }
-    public MCTSNode(){
+
+    public MCTSNode()
+    {
         this.actionPrune = (SimulationContext context, GameAction action) -> {
             return action.getActionType() == ActionType.SUMMON && action.getTargetKey() != null;
         };
@@ -97,7 +93,6 @@ public abstract class  MCTSNode {
     }
 
     public abstract double rollOut(MCTSNode node, List<GameAction> validActions);
-
 
     public MCTSNode select(double exploreFactor)
     {
@@ -218,13 +213,8 @@ public abstract class  MCTSNode {
         }
     }
 
-    public String toDot(int[] parent, int maxDepth, int parentActivePlayer) {
-
-
-        // if(this.totValue[activePlayer]/this.nVisits > 1.0){
-        //    System.err.println("you done bad");
-        //    System.exit(0);
-        // }
+    public String toDot(int[] parent, int maxDepth, int parentActivePlayer)
+    {
         double newValue = getValue(parentActivePlayer) / this.getNumVisits();
         newValue = Math.round(newValue * 1000);
         newValue /= 1000.0;
@@ -250,5 +240,4 @@ public abstract class  MCTSNode {
         }
         return contrib;
     }
-
 }

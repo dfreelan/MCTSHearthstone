@@ -18,43 +18,41 @@ import net.demilich.metastone.game.cards.Card;
 import net.demilich.metastone.game.cards.CardType;
 import net.demilich.metastone.game.entities.minions.Minion;
 
-/**
- *
- * @author dfreelan
- */
-public final class FeatureCollector implements Cloneable {
+public final class FeatureCollector implements Cloneable
+{
+    private static final boolean collectTypeFeatures = true;
+    private static final boolean creatureDetails = true;
+    private Random random = new Random();
 
-    static final boolean collectTypeFeatures = true;
-    static final boolean creatureDetails = true;
-    Random random = new Random();
     //contains an array that holds the features
     //can query furfillOrder to populate the data
     //need to be initialized with # minions and spells in each deck
-    TIntIntHashMap enemyCardMap = new TIntIntHashMap(60, 1.01f, -1, -1);
-    TIntIntHashMap myCardMap = new TIntIntHashMap(60, 1.01f, -1, -1);
+    private TIntIntHashMap enemyCardMap = new TIntIntHashMap(60, 1.01f, -1, -1);
+    private TIntIntHashMap myCardMap = new TIntIntHashMap(60, 1.01f, -1, -1);
 
-    TIntIntHashMap enemyCardMapTypes = new TIntIntHashMap(60, 1.01f, -1, -1);
-    TIntIntHashMap myCardMapTypes = new TIntIntHashMap(60, 1.01f, -1, -1);
+    private TIntIntHashMap enemyCardMapTypes = new TIntIntHashMap(60, 1.01f, -1, -1);
+    private TIntIntHashMap myCardMapTypes = new TIntIntHashMap(60, 1.01f, -1, -1);
 
-    double[] featureData; //feature array, will be resued;
-    ArrayList<Integer> cardCount = new ArrayList<Integer>();
-    ArrayList<String> cardNames = new ArrayList<String>();
+    private double[] featureData; //feature array, will be resued;
+    private ArrayList<Integer> cardCount = new ArrayList<Integer>();
+    private ArrayList<String> cardNames = new ArrayList<String>();
 
-    ArrayList<Integer> enemyCardCount = new ArrayList<Integer>();
-    ArrayList<String> enemyCardNames = new ArrayList<String>();
+    private ArrayList<Integer> enemyCardCount = new ArrayList<Integer>();
+    private ArrayList<String> enemyCardNames = new ArrayList<String>();
 
-    int lastSelfCard;
-    int lastEnemyCard;
-    int featureCount = 0;
-    int myBoardStart;
-    int enemyBoardStart;
-    int creatureCount = 0;
-    int creatureCountOpp;
-    int numCreatureFeatures = 6;
-    int myCreatureTypesStart;
-    int enemyCreatureTypesStart;
+    private int lastSelfCard;
+    private int lastEnemyCard;
+    private int featureCount = 0;
+    private int myBoardStart;
+    private int enemyBoardStart;
+    private int creatureCount = 0;
+    private int creatureCountOpp;
+    private int numCreatureFeatures = 6;
+    private int myCreatureTypesStart;
+    private int enemyCreatureTypesStart;
 
-    public synchronized FeatureCollector clone() {
+    public synchronized FeatureCollector clone()
+    {
         FeatureCollector clone = new FeatureCollector();
         clone.enemyCardMap = this.enemyCardMap;
         clone.myCardMap = this.myCardMap;
@@ -73,7 +71,8 @@ public final class FeatureCollector implements Cloneable {
         return clone;
     }
 
-    public FeatureCollector(GameContext context, Player player) {
+    public FeatureCollector(GameContext context, Player player)
+    {
         context = context.clone();
         System.err.println(" no entry means : " + myCardMap.getNoEntryValue());
         player = context.getPlayer(player.getId());
@@ -123,6 +122,7 @@ public final class FeatureCollector implements Cloneable {
             }
         }
         lastEnemyCard = featureCount - 2;
+
         //feature data will be features count, my health/armor, opponent health/armor, myMana/maxMana, enemyMana/maxMana, my board(7*3), opponent board (7*3)
         //also weapon attack and health and turn
         if (!collectTypeFeatures) {
@@ -137,10 +137,10 @@ public final class FeatureCollector implements Cloneable {
         this.enemyBoardStart = myBoardStart + 7 * numCreatureFeatures;
         this.myCreatureTypesStart = featureCount + 1+1 + 1 + 1 + 1 + 2 + 2 + 2 + 2 + 1 + 1 + 1 + 2 + 7 * numCreatureFeatures + 7 * numCreatureFeatures;
         this.enemyCreatureTypesStart = featureCount + 1+1 + 1 + 1 + 1 + 2 + 2 + 2 + 2 + 1 + 1 + 1 + 2 + 7 * numCreatureFeatures + 7 * numCreatureFeatures + creatureCount * numCreatureFeatures;
-
     }
 
-    public double[] getFeatures(boolean includeAction, GameContext context, Player player) {
+    public double[] getFeatures(boolean includeAction, GameContext context, Player player)
+    {
         //hand,deck,played
         context = context.clone();
         player = context.getPlayer(player.getId());
@@ -185,7 +185,8 @@ public final class FeatureCollector implements Cloneable {
         return featureData;
     }
 
-    public void addMinions(List<Minion> minions, int indexStart, TIntIntHashMap myMap, int indexStartTypes) {
+    public void addMinions(List<Minion> minions, int indexStart, TIntIntHashMap myMap, int indexStartTypes)
+    {
         int currentIndex = indexStart;
         for (Minion minion : minions) {
             //RAW BOARD no creature types included
@@ -227,10 +228,10 @@ public final class FeatureCollector implements Cloneable {
                 currentIndex = oldCurrent;
             }
         }
-
     }
 
-    public void calculatePlayedCards() {
+    public void calculatePlayedCards()
+    {
         for (int i = 0; i <= lastSelfCard; i += 3) {
             int cardNum = i / 3;
             double total = this.cardCount.get(cardNum);
@@ -260,23 +261,21 @@ public final class FeatureCollector implements Cloneable {
         }
     }
 
-    public void populateFeatureData(TIntIntHashMap myMap, int offset, List<Card> cards) {
-
+    public void populateFeatureData(TIntIntHashMap myMap, int offset, List<Card> cards)
+    {
         for (Card card : cards) {
             int index = myMap.get(card.getName().hashCode());
             if (index != -1) {
                 if (card.getName().contains("Aco") && myMap == this.myCardMap) {
                     // System.err.println("found another  " + card.getName() + " in my offset " + offset);
-
                 }
                 featureData[index + offset] += (1.0 / 2.0);
-
             }
         }
-
     }
-    public double getHash(GameContext context, int playerID){
 
+    public double getHash(GameContext context, int playerID)
+    {
         double info[] = this.getFeatures(false, context, context.getPlayer(playerID));
         Random hashGen = new Random(93847);
         double acuum = 0;
@@ -286,12 +285,12 @@ public final class FeatureCollector implements Cloneable {
         }
 
         return acuum;
-
-    }
-    private FeatureCollector() {
     }
 
-    public void printFeatures(GameContext context, Player player) {
+    private FeatureCollector() {}
+
+    public void printFeatures(GameContext context, Player player)
+    {
         double[] features = this.getFeatures(false, context, player);
         System.err.println("my card data:");
         for (int i = 0; i < this.cardCount.size(); i++) {

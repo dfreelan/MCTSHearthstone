@@ -145,7 +145,6 @@ public class HeuristicBehavior extends Behaviour
                             }
                         }
                     } else {
-
                         simulation.applyAction(player.getId(), action);
                         if (action.getActionType().equals(ActionType.SUMMON)) {
                             chooseAction = false;
@@ -247,6 +246,6 @@ public class HeuristicBehavior extends Behaviour
     @Override
     public List<Card> mulligan(GameContext gameContext, Player player, List<Card> list)
     {
-        return new ArrayList<Card>();
+        return new ArrayList<>();
     }
 }

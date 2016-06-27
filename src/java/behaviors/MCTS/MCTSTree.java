@@ -2,8 +2,6 @@ package behaviors.MCTS;
 
 import java.util.List;
 
-import behaviors.standardMCTS.MCTSStandardNode;
-import behaviors.util.IFilter;
 import behaviors.util.ActionValuePair;
 
 public class MCTSTree

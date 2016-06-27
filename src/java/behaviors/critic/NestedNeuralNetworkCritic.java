@@ -25,7 +25,6 @@ import java.util.List;
 public class NestedNeuralNetworkCritic implements Critic
 {
     private final String trainingLogFileLocation = "training_log.txt";
-    //private final int MAX_TRAINING_STATES =
 
     private MultiLayerNetwork network;
     private FeatureCollector fCollector;
@@ -48,10 +47,9 @@ public class NestedNeuralNetworkCritic implements Critic
         network = new MultiLayerNetwork(networkConfig);
         network.init();
 
-        List<SimulationContext> states = trainConfig.collector.collectStates(trainConfig.numStates, trainConfig.initialState, trainConfig.parallel);
+        List<SimulationContext> states;
         int trainingStates = (int)(trainConfig.numStates * 0.9);
         int testingStates = trainConfig.numStates - trainingStates;
-
 
         GameContext context = trainConfig.initialState.getGameContext();
         System.err.println("Context is: " + context);
@@ -68,26 +66,25 @@ public class NestedNeuralNetworkCritic implements Critic
             }
         }
 
-
         network.setListeners(new TrainingIterationListener(1, true, trainingLogFile));
         MultiLayerNetwork currentNetwork = network;
-        //DataSet trainingData = getDataSet(states, trainingStates, fCollector, trainConfig.judge);
-        for(int i = 0; i<trainConfig.nestAmount+1; i++) {
+        for(int i = 0; i < trainConfig.nestAmount+1; i++) {
             states = trainConfig.collector.collectStates(trainConfig.numStates, trainConfig.initialState, trainConfig.parallel);
             DataSet trainingData = getDataSet(states, trainingStates, fCollector, trainConfig.judge);
             network.fit(trainingData);
 
-            System.err.println("NESTIteration: " + i);
+            System.err.println("NEST Iteration: " + i);
             System.err.println("Training Error: " + meanSqError(trainingData.getFeatures(), trainingData.getLabels()));
             DataSet testingData = getDataSet(states, testingStates, fCollector, trainConfig.judge);
             System.err.println("Testing Error: " + meanSqError(testingData.getFeatures(), testingData.getLabels()));
-            System.err.println("error if always 0: " + getErrorIfZero(trainingData.getLabels()));
+            System.err.println("Error if always 0: " + getErrorIfZero(trainingData.getLabels()));
 
             currentNetwork = network;
             network = new MultiLayerNetwork(networkConfig);
 
             trainConfig.judge = new MCTSBehavior(nestedConfig,new MCTSNeuralNode(new NestedNeuralNetworkCritic(currentNetwork,fCollector), nestedConfig.povMode));
         }
+
         network = currentNetwork;
         saveNetwork(network, saveLocation);
     }
@@ -140,7 +137,7 @@ public class NestedNeuralNetworkCritic implements Critic
     public double getCritique(SimulationContext context, Player pov)
     {
         INDArray features = Nd4j.create(fCollector.getFeatures(true, context.getGameContext(), pov));
-        return (network.output(features, Layer.TrainingMode.TEST).get(new SpecifiedIndex(0)).getDouble(0)+1.0)/(2.0);
+        return (network.output(features, Layer.TrainingMode.TEST).get(new SpecifiedIndex(0)).getDouble(0) + 1.0) / 2.0;
     }
 
     private MultiLayerNetwork loadNetwork(Path loadLocation)
@@ -174,8 +171,10 @@ public class NestedNeuralNetworkCritic implements Critic
             throw new RuntimeException("Error saving NN to " + saveLocation.toString());
         }
     }
+
     @Override
-    public Critic clone(){
+    public Critic clone()
+    {
         NestedNeuralNetworkCritic clone = new NestedNeuralNetworkCritic();
         clone.network = this.network.clone();
         clone.fCollector = fCollector.clone();

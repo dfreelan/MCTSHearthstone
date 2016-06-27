@@ -6,20 +6,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.IntStream;
 
-import behaviors.util.BehaviorConfig;
-import behaviors.util.StateJudge;
-import net.demilich.metastone.game.GameContext;
-import net.demilich.metastone.game.Player;
-import net.demilich.metastone.game.actions.ActionType;
-import net.demilich.metastone.game.actions.GameAction;
-import net.demilich.metastone.game.behaviour.Behaviour;
-import net.demilich.metastone.game.behaviour.IBehaviour;
-import net.demilich.metastone.game.cards.Card;
-
 import behaviors.util.ActionValuePair;
 import behaviors.util.IArrayCompressor;
 import behaviors.util.IFilter;
 import behaviors.simulation.SimulationContext;
+import behaviors.util.BehaviorConfig;
+import behaviors.util.StateJudge;
+import net.demilich.metastone.game.GameContext;
+import net.demilich.metastone.game.Player;
+import net.demilich.metastone.game.actions.GameAction;
+import net.demilich.metastone.game.behaviour.Behaviour;
+import net.demilich.metastone.game.behaviour.IBehaviour;
+import net.demilich.metastone.game.cards.Card;
 
 public class MCTSBehavior extends Behaviour implements StateJudge
 {
@@ -36,11 +34,13 @@ public class MCTSBehavior extends Behaviour implements StateJudge
     private boolean logTrees = false;
 
     @Override
-    public MCTSBehavior clone(){
+    public MCTSBehavior clone()
+    {
         MCTSBehavior clone = new MCTSBehavior(exploreFactor,numTrees,numIterations,template,logTrees);
         clone.setName(name);
         return clone;
     }
+
     public MCTSBehavior(double exploreFactor, int numTrees, int numIterations, MCTSNode template,boolean logTrees)
     {
         super();
@@ -66,28 +66,25 @@ public class MCTSBehavior extends Behaviour implements StateJudge
 
         this.template = template;
     }
+
     public MCTSBehavior(BehaviorConfig behaviorConfig, MCTSNode template)
     {
         this(behaviorConfig.exploreFactor, behaviorConfig.numTrees, behaviorConfig.numIterations, template, behaviorConfig.logTrees);
     }
 
-
-
     @Override
     public GameAction requestAction(GameContext gameContext, Player player, List<GameAction> validActions)
     {
-
         if(validActions.size() == 1) {
             return validActions.get(0);
         }
+
         gameContext = gameContext.clone();
         MCTSTree[] trees = new MCTSTree[numTrees];
         double[][] accumulateStats = new double[numTrees][];
 
         for(int i = 0; i < numTrees; i++) {
-
             MCTSNode root = template.nodeFactoryMethod(new SimulationContext(gameContext,previousAction), null, validActions, player);
-
             root.getContext().randomize(player.getId());
 
             trees[i] = new MCTSTree(exploreFactor, root);
@@ -106,7 +103,6 @@ public class MCTSBehavior extends Behaviour implements StateJudge
         IntStream.range(0, numTrees).parallel().forEach((int i) -> runForest(trees, accumulateStats, hashToIndex, i));
 
         double[] actionValues = statCompressor.compress(accumulateStats);
-
         int maxIndex = 0;
         for(int i = 1; i < actionValues.length; i++) {
             if(actionValues[i] > actionValues[maxIndex]) {
@@ -127,9 +123,7 @@ public class MCTSBehavior extends Behaviour implements StateJudge
         double[][] accumulateStats = new double[numTrees][];
 
         for(int i = 0; i < numTrees; i++) {
-
             MCTSNode root = template.nodeFactoryMethod(new SimulationContext(gameContext,previousAction), null, validActions, gameContext.getActivePlayer());
-
             root.getContext().randomize(pov.getId());
 
             trees[i] = new MCTSTree(exploreFactor, root);
@@ -165,7 +159,7 @@ public class MCTSBehavior extends Behaviour implements StateJudge
             int actionIndex = actionHashToIndex.get(actionHash(actionValue.action));
             accumulateStats[treeIndex][actionIndex] = actionValue.value;
         }
-        if(logTrees){
+        if(logTrees) {
             root.saveTreeToDot(template.getClass().getName() + "-P" + root.getClass().getName() + "-T" + treeIndex + ".dot",4);
         }
     }
@@ -182,6 +176,6 @@ public class MCTSBehavior extends Behaviour implements StateJudge
 
     @Override
     public List<Card> mulligan(GameContext gameContext, Player player, List<Card> list) {
-        return new ArrayList<Card>();
+        return new ArrayList<>();
     }
 }

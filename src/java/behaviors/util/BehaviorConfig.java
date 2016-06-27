@@ -82,8 +82,25 @@ public class BehaviorConfig
             }
         }
         if(ArgumentUtils.keyExists("-povmode" + playerIndicator, args)) {
-            switch(ArgumentUtils.argumentForKey("-networkconfig" + playerIndicator, args)) {
-                //TODO:
+            String povArg = ArgumentUtils.argumentForKey("-povmode" + playerIndicator, args);
+            switch(povArg.toLowerCase()) {
+                case "self":
+                    povMode = POVMode.SELF;
+                    break;
+                case "opponent":
+                    povMode = POVMode.OPPONENT;
+                    break;
+                case "root":
+                    povMode = POVMode.ROOT;
+                    break;
+                case "rootopponent":
+                    povMode = POVMode.ROOT_OPPONENT;
+                    break;
+                case "average":
+                    povMode = POVMode.AVERAGE;
+                    break;
+                default:
+                    throw new RuntimeException("Error: " + povArg + " isn't a valid POV Mode");
             }
         }
         if(ArgumentUtils.keyExists("-deck" + playerIndicator, args)) {
@@ -95,10 +112,13 @@ public class BehaviorConfig
     {
         other.numTrees = numTrees;
         other.numIterations = numIterations;
+        other.logTrees = logTrees;
         other.exploreFactor = exploreFactor;
     
         other.loadNetworkFile = loadNetworkFile;
+        other.saveNetworkFile = saveNetworkFile;
         other.networkConfigFile = networkConfigFile;
+        other.povMode = povMode;
     
         other.deckName = deckName;
     }

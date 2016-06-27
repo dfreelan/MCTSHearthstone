@@ -1,15 +1,15 @@
 package main;
 
-
 import java.nio.file.Files;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import behaviors.simulation.SimulationContext;
+import behaviors.MCTS.MCTSBehavior;
 import behaviors.DummyBehavior;
 import behaviors.MCTSCritic.MCTSNeuralNode;
 import behaviors.critic.NestedNeuralNetworkCritic;
 import behaviors.critic.NeuralNetworkCritic;
-import behaviors.critic.POVMode;
 import behaviors.critic.TrainConfig;
 import behaviors.heuristic.HeuristicBehavior;
 import behaviors.standardMCTS.MCTSStandardNode;
@@ -34,9 +34,6 @@ import net.demilich.metastone.gui.deckbuilder.DeckFormatProxy;
 import net.demilich.metastone.gui.deckbuilder.DeckProxy;
 import net.demilich.metastone.gui.deckbuilder.importer.HearthPwnImporter;
 
-import behaviors.simulation.SimulationContext;
-import behaviors.MCTS.MCTSBehavior;
-import net.didion.jwnl.data.Exc;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.LearningRatePolicy;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
@@ -44,10 +41,7 @@ import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.Updater;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
-import org.deeplearning4j.nn.conf.stepfunctions.DefaultStepFunction;
 import org.deeplearning4j.nn.conf.stepfunctions.NegativeDefaultStepFunction;
-import org.deeplearning4j.nn.conf.stepfunctions.StepFunction;
-import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
@@ -264,8 +258,7 @@ public class MetastoneTester
                         .activation("tanh").weightInit(WeightInit.XAVIER)
                         .nIn(80).nOut(1).build()).backprop(true).pretrain((true))
                 .build();
-
-
+        
         return networkConfig;
     }
 

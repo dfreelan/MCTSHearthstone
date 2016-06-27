@@ -2,8 +2,6 @@ package behaviors.simulation;
 
 import net.demilich.metastone.game.cards.Card;
 import net.demilich.metastone.game.cards.CardCollection;
-import net.demilich.metastone.game.decks.Deck;
-import net.demilich.metastone.game.actions.GameAction;
 
 public class SimulationCardCollection extends CardCollection
 {
