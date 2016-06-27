@@ -82,7 +82,7 @@ public class MCTSBehavior extends Behaviour implements StateJudge
 
         for(int i = 0; i < numTrees; i++) {
 
-            MCTSNode root = template.nodeFactoryMethod(new SimulationContext(gameContext,previousAction), null, validActions);
+            MCTSNode root = template.nodeFactoryMethod(new SimulationContext(gameContext,previousAction), null, validActions, player);
 
             root.getContext().randomize(player.getId());
 
@@ -125,7 +125,7 @@ public class MCTSBehavior extends Behaviour implements StateJudge
 
         for(int i = 0; i < numTrees; i++) {
 
-            MCTSNode root = template.nodeFactoryMethod(new SimulationContext(gameContext,previousAction), null, validActions);
+            MCTSNode root = template.nodeFactoryMethod(new SimulationContext(gameContext,previousAction), null, validActions, gameContext.getActivePlayer());
 
             root.getContext().randomize(pov.getId());
 

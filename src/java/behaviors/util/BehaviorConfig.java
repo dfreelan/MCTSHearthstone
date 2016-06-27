@@ -1,5 +1,7 @@
 package behaviors.util;
 
+import behaviors.critic.POVMode;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -13,7 +15,9 @@ public class BehaviorConfig
     public double exploreFactor;
     
     public Path loadNetworkFile;
+    public Path saveNetworkFile;
     public Path networkConfigFile;
+    public POVMode povMode;
     
     public String deckName;
     
@@ -30,7 +34,9 @@ public class BehaviorConfig
         exploreFactor = 1.4;
         
         loadNetworkFile = null;
+        saveNetworkFile = Paths.get("neural_network.dat");
         networkConfigFile = null;
+        povMode = POVMode.SELF;
         
         deckName = "nobattlecryhunter";
     }
@@ -63,10 +69,20 @@ public class BehaviorConfig
                 throw new RuntimeException("Error: " + loadNetworkFile.toString() + " does not exist");
             }
         }
+        if(ArgumentUtils.keyExists("-loadnetwork" + playerIndicator, args)) {
+            saveNetworkFile = Paths.get(ArgumentUtils.argumentForKey("-savenetwork" + playerIndicator, args));
+        }
         if(ArgumentUtils.keyExists("-networkconfig" + playerIndicator, args)) {
             networkConfigFile = Paths.get(ArgumentUtils.argumentForKey("-networkconfig" + playerIndicator, args));
             if(!Files.exists(networkConfigFile)) {
                 throw new RuntimeException("Error: " + networkConfigFile.toString() + " does not exist");
+            } else if(!networkConfigFile.toString().endsWith(".json")) {
+                throw new RuntimeException("Error: network config must be a .json file");
+            }
+        }
+        if(ArgumentUtils.keyExists("-povmode" + playerIndicator, args)) {
+            switch(ArgumentUtils.argumentForKey("-networkconfig" + playerIndicator, args)) {
+                //TODO:
             }
         }
         if(ArgumentUtils.keyExists("-deck" + playerIndicator, args)) {

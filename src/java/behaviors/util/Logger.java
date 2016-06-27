@@ -15,7 +15,7 @@ public class Logger
         }
 
         if(logFile != null) {
-            writeToFile(logFile, text + "\n");
+            writeToFile(logFile, text + System.lineSeparator());
         }
     }
 

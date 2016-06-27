@@ -5,11 +5,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import java.nio.file.StandardOpenOption;
+import java.util.List;
 import java.util.stream.IntStream;
 
 import behaviors.DummyBehavior;
 import behaviors.MCTSCritic.MCTSNeuralNode;
 import behaviors.critic.NeuralNetworkCritic;
+import behaviors.critic.POVMode;
 import behaviors.critic.TrainConfig;
 import behaviors.heuristic.HeuristicBehavior;
 import behaviors.standardMCTS.MCTSStandardNode;
@@ -36,6 +39,7 @@ import net.demilich.metastone.gui.deckbuilder.importer.HearthPwnImporter;
 
 import behaviors.simulation.SimulationContext;
 import behaviors.MCTS.MCTSBehavior;
+import net.didion.jwnl.data.Exc;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.LearningRatePolicy;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
@@ -106,13 +110,12 @@ public class MetastoneTester
         game.getGameContext().getPlayer1().setName(behavior1.getName());
         game.getGameContext().getPlayer2().setName(behavior2.getName());
 
-        long beginGamesTime = System.nanoTime();
-
         System.err.println("Actual p1 behavior: " + game.getGameContext().getPlayer1().getBehaviour().getClass().getName());
         System.err.println("Actual p2 behavior: " + game.getGameContext().getPlayer2().getBehaviour().getClass().getName());
         System.err.println("Named p1 behavior: " + game.getGameContext().getPlayer1().getBehaviour().getName());
         System.err.println("Named p2 behavior: " + game.getGameContext().getPlayer2().getBehaviour().getName());
 
+        long beginGamesTime = System.nanoTime();
         if(globalConfig.parallel) {
             IntStream.range(0, globalConfig.simulations).parallel().forEach((int i) -> runSimulation(game.clone(), i, globalConfig));
         } else {
@@ -139,12 +142,12 @@ public class MetastoneTester
     private static void printStats(double[] stats, GlobalConfig globalConfig, boolean includeTime)
     {
         String status = "";
-        status += "Wins: " + stats[1] + "\n";
-        status += "Losses: " + stats[2] + "\n";
-        status += "Ties: " + stats[0] + "\n";
+        status += "Wins: " + stats[1] + System.lineSeparator();
+        status += "Losses: " + stats[2] + System.lineSeparator();
+        status += "Ties: " + stats[0] + System.lineSeparator();
         if(includeTime) {
-            status += "Time Elapsed: " + stats[3] + "s\n";
-            status += "Average Time Per Game: " + stats[4] + "s\n";
+            status += "Time Elapsed: " + stats[3] + "s" + System.lineSeparator();
+            status += "Average Time Per Game: " + stats[4] + "s" + System.lineSeparator();
         }
         Logger.log(status, globalConfig.consoleOutput, globalConfig.logFile);
     }
@@ -186,22 +189,32 @@ public class MetastoneTester
                 if (behaviorConfig.networkConfigFile == null) {
                     networkConfig = defaultNetworkConfig(game, player);
                 } else {
-                    //TODO: load config from .json file
-                    networkConfig = null;
+                    String fileText = "";
+                    List<String> lines;
+                    try {
+                        lines = Files.readAllLines(behaviorConfig.networkConfigFile);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        throw new RuntimeException("Error reading from " + behaviorConfig.toString());
+                    }
+                    for(String line : lines) {
+                        fileText += line + System.lineSeparator();
+                    }
+
+                    networkConfig = MultiLayerConfiguration.fromJson(fileText);
                 }
 
                 MCTSBehavior neural = null;
                 if (behaviorConfig.loadNetworkFile == null) {
                     BehaviorConfig defaultJudgeConfig = new BehaviorConfig(player.getId());
-                    defaultJudgeConfig.numTrees=4;
-                    defaultJudgeConfig.numIterations=40;
+                    defaultJudgeConfig.numTrees = 4;
+                    defaultJudgeConfig.numIterations = 40;
                     TrainConfig trainConfig = new TrainConfig(5000, game, new RandomStateCollector(new PlayRandomBehaviour()),
                             new MCTSBehavior(defaultJudgeConfig, new MCTSStandardNode(new PlayRandomBehaviour())), true);
 
-                    neural = new MCTSBehavior(behaviorConfig, new MCTSNeuralNode(new NeuralNetworkCritic(networkConfig, trainConfig, Paths.get("neural_network.dat"))));
+                    neural = new MCTSBehavior(behaviorConfig, new MCTSNeuralNode(new NeuralNetworkCritic(networkConfig, trainConfig, behaviorConfig.saveNetworkFile), behaviorConfig.povMode));
                 } else {
-
-                    neural = new MCTSBehavior(behaviorConfig, new MCTSNeuralNode(new NeuralNetworkCritic(behaviorConfig.loadNetworkFile, game)));
+                    neural = new MCTSBehavior(behaviorConfig, new MCTSNeuralNode(new NeuralNetworkCritic(behaviorConfig.loadNetworkFile, game), behaviorConfig.povMode));
                 }
 
                 neural.setName("MCTSNeuralBehavior");
@@ -260,9 +273,6 @@ public class MetastoneTester
 
         p1Config.build();
         p2Config.build();
-
-        System.err.println("P2Config: " + p2Config);
-        System.err.println("Deck2: " + deck2);
 
         p1Config.setHeroCard(MetaHero.getHeroCard(deck1.getHeroClass()));
         p2Config.setHeroCard(MetaHero.getHeroCard(deck2.getHeroClass()));
