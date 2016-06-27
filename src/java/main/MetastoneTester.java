@@ -209,9 +209,9 @@ public class MetastoneTester
                 MCTSBehavior neural = null;
                 if (behaviorConfig.loadNetworkFile == null) {
                     BehaviorConfig defaultJudgeConfig = new BehaviorConfig(player.getId());
-                    defaultJudgeConfig.numTrees=4;
-                    defaultJudgeConfig.numIterations=4;
-                    TrainConfig trainConfig = new TrainConfig(50000, game, new RandomStateCollector(new PlayRandomBehaviour()),
+                    defaultJudgeConfig.numTrees = 4;
+                    defaultJudgeConfig.numIterations = 60;
+                    TrainConfig trainConfig = new TrainConfig(500, game, new RandomStateCollector(new PlayRandomBehaviour()),
                             new MCTSBehavior(defaultJudgeConfig, new MCTSStandardNode(new PlayRandomBehaviour())), true);
 
                     neural = new MCTSBehavior(behaviorConfig, new MCTSNeuralNode(new NeuralNetworkCritic(networkConfig, trainConfig, behaviorConfig.saveNetworkFile), behaviorConfig.povMode));
@@ -240,6 +240,7 @@ public class MetastoneTester
                         .updater(Updater.NESTEROVS)
                         .build())
                 .layer(1, new DenseLayer.Builder().nIn(80).nOut(80)
+                        .dropOut(0.5)
                         .activation("leakyrelu").momentum(0.9)
                         .weightInit(WeightInit.XAVIER)
                         .updater(Updater.NESTEROVS)

@@ -32,7 +32,7 @@ public class TrainingIterationListener implements IterationListener
     {
         if(iteration % logInterval == 0) {
             invoke();
-            Logger.log("Iteration[ + " + iteration + "] Score: " + model.score(), consoleOutput, logFile);
+            Logger.log("Iteration[ + " + iteration + "] Score: " + (model.score() * 2), consoleOutput, logFile);
         }
     }
 }

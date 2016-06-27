@@ -171,7 +171,6 @@ public abstract class  MCTSNode {
     public double getExploit(int activePlayer)
     {
         return getValue(activePlayer) / (numVisits + epsilon);
-
     }
 
     public List<ActionValuePair> getChildScores(int playerID)
@@ -218,6 +217,7 @@ public abstract class  MCTSNode {
             e.printStackTrace();
         }
     }
+
     public String toDot(int[] parent, int maxDepth, int parentActivePlayer) {
 
 

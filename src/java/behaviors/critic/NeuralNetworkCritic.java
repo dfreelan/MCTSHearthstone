@@ -22,7 +22,6 @@ import java.util.List;
 public class NeuralNetworkCritic implements Critic
 {
     private final String trainingLogFileLocation = "training_log.txt";
-    //private final int MAX_TRAINING_STATES =
 
     private MultiLayerNetwork network;
     private FeatureCollector fCollector;
