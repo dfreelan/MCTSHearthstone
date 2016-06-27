@@ -2,15 +2,12 @@ package main;
 
 
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
-import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.stream.IntStream;
 
 import behaviors.DummyBehavior;
 import behaviors.MCTSCritic.MCTSNeuralNode;
+import behaviors.critic.NestedNeuralNetworkCritic;
 import behaviors.critic.NeuralNetworkCritic;
 import behaviors.critic.POVMode;
 import behaviors.critic.TrainConfig;
@@ -221,6 +218,23 @@ public class MetastoneTester
 
                 neural.setName("MCTSNeuralBehavior");
                 return neural;
+            case "mctsneuralnested":
+                neural = null;
+                networkConfig = defaultNetworkConfig(game, player);
+                BehaviorConfig defaultJudgeConfig = new BehaviorConfig(player.getId());
+                defaultJudgeConfig.numTrees=4;
+                defaultJudgeConfig.numIterations=400;
+
+                TrainConfig trainConfig = new TrainConfig(25000, game, new RandomStateCollector(new PlayRandomBehaviour()),
+                        new MCTSBehavior(defaultJudgeConfig, new MCTSStandardNode(new PlayRandomBehaviour())), true);
+
+                trainConfig.nestAmount = 10;
+
+                neural = new MCTSBehavior(behaviorConfig, new MCTSNeuralNode(new NestedNeuralNetworkCritic(networkConfig, trainConfig, behaviorConfig.saveNetworkFile,defaultJudgeConfig), behaviorConfig.povMode));
+
+
+                neural.setName("MCTSNeuralBehavior");
+                return neural;
             default:
                 throw new RuntimeException("Error: " + name + " behavior does not exist.");
         }
@@ -240,7 +254,6 @@ public class MetastoneTester
                         .updater(Updater.NESTEROVS)
                         .build())
                 .layer(1, new DenseLayer.Builder().nIn(80).nOut(80)
-                        .dropOut(0.5)
                         .activation("leakyrelu").momentum(0.9)
                         .weightInit(WeightInit.XAVIER)
                         .updater(Updater.NESTEROVS)
