@@ -33,15 +33,18 @@ public class MCTSBehavior extends Behaviour implements StateJudge
     private String name = "MCTSBehavior";
     private MCTSNode template;
 
+    private boolean logTrees = false;
+
     @Override
     public MCTSBehavior clone(){
-        MCTSBehavior clone = new MCTSBehavior(exploreFactor,numTrees,numIterations,template);
+        MCTSBehavior clone = new MCTSBehavior(exploreFactor,numTrees,numIterations,template,logTrees);
         clone.setName(name);
         return clone;
     }
-    public MCTSBehavior(double exploreFactor, int numTrees, int numIterations, MCTSNode template)
+    public MCTSBehavior(double exploreFactor, int numTrees, int numIterations, MCTSNode template,boolean logTrees)
     {
         super();
+        this.logTrees = logTrees;
         this.exploreFactor = exploreFactor;
         this.numTrees = numTrees;
         this.numIterations = numIterations;
@@ -65,8 +68,9 @@ public class MCTSBehavior extends Behaviour implements StateJudge
     }
     public MCTSBehavior(BehaviorConfig behaviorConfig, MCTSNode template)
     {
-        this(behaviorConfig.exploreFactor, behaviorConfig.numTrees, behaviorConfig.numIterations, template);
+        this(behaviorConfig.exploreFactor, behaviorConfig.numTrees, behaviorConfig.numIterations, template, behaviorConfig.logTrees);
     }
+
 
 
     @Override
@@ -109,7 +113,6 @@ public class MCTSBehavior extends Behaviour implements StateJudge
                 maxIndex = i;
             }
         }
-
 
         previousAction = validActions.get(maxIndex);
         return previousAction;
@@ -161,6 +164,9 @@ public class MCTSBehavior extends Behaviour implements StateJudge
         for(ActionValuePair actionValue : actionValues) {
             int actionIndex = actionHashToIndex.get(actionHash(actionValue.action));
             accumulateStats[treeIndex][actionIndex] = actionValue.value;
+        }
+        if(logTrees){
+            root.saveTreeToDot(template.getClass().getName() + "-P" + root.getClass().getName() + "-T" + treeIndex + ".dot",4);
         }
     }
 

@@ -66,6 +66,8 @@ public class MetastoneTester
 
         BehaviorConfig behaviorConfig1 = new BehaviorConfig(0);
         BehaviorConfig behaviorConfig2 = new BehaviorConfig(1);
+        behaviorConfig1.logTrees = true;
+        behaviorConfig2.logTrees = true;
 
         behaviorConfig1.applyArguments(args);
         behaviorConfig1.copyTo(behaviorConfig2);
@@ -193,9 +195,10 @@ public class MetastoneTester
                 MCTSBehavior neural = null;
                 if (behaviorConfig.loadNetworkFile == null) {
                     BehaviorConfig defaultJudgeConfig = new BehaviorConfig(player.getId());
-                    defaultJudgeConfig.numTrees=4;
-                    defaultJudgeConfig.numIterations=4;
-                    TrainConfig trainConfig = new TrainConfig(50000, game, new RandomStateCollector(new PlayRandomBehaviour()),
+                    defaultJudgeConfig.numTrees=10;
+                    defaultJudgeConfig.numIterations=10;
+
+                    TrainConfig trainConfig = new TrainConfig(5000, game, new RandomStateCollector(new PlayRandomBehaviour()),
                             new MCTSBehavior(defaultJudgeConfig, new MCTSStandardNode(new PlayRandomBehaviour())), true);
 
                     neural = new MCTSBehavior(behaviorConfig, new MCTSNeuralNode(new NeuralNetworkCritic(networkConfig, trainConfig, Paths.get("neural_network.dat"))));
@@ -215,11 +218,8 @@ public class MetastoneTester
     {
         FeatureCollector fCollector = new FeatureCollector(game.getGameContext(), player);
         MultiLayerConfiguration networkConfig = new NeuralNetConfiguration.Builder()
-                .learningRate(1e-1).learningRateDecayPolicy(LearningRatePolicy.Inverse).lrPolicyDecayRate(1e-4).lrPolicyPower(0.75)
+                .learningRate(1e-2).learningRateDecayPolicy(LearningRatePolicy.Inverse).lrPolicyDecayRate(1e-4).lrPolicyPower(0.75)
                 .iterations(1000).stepFunction(new NegativeDefaultStepFunction())
-                .regularization(true)
-                .l1(1e-1).l2(2e-4).useDropConnect(true)
-                .miniBatch(true)
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                 .list(3)
                 .layer(0, new DenseLayer.Builder().nIn(fCollector.getFeatures(true, game.getGameContext(), player).length).nOut(80)
@@ -236,7 +236,7 @@ public class MetastoneTester
                         .weightInit(WeightInit.XAVIER).momentum(0.9)
                         .updater(Updater.NESTEROVS)
                         .activation("tanh").weightInit(WeightInit.XAVIER)
-                        .nIn(80).nOut(1).build()).backprop(true).pretrain((false))
+                        .nIn(80).nOut(1).build()).backprop(true).pretrain((true))
                 .build();
 
 

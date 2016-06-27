@@ -5,7 +5,9 @@ import behaviors.util.ActionValuePair;
 import behaviors.util.IFilter;
 import net.demilich.metastone.game.actions.ActionType;
 import net.demilich.metastone.game.actions.GameAction;
+import net.demilich.metastone.game.actions.PlayCardAction;
 
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -101,10 +103,10 @@ public abstract class  MCTSNode {
         }
 
         MCTSNode bestNode = children.get(0);
-        double bestValue = bestNode.getUCB(numVisits, exploreFactor);
+        double bestValue = bestNode.getUCB(numVisits, exploreFactor,this.getContext().getActivePlayerId());
 
         for(int i = 1; i < children.size(); i++) {
-            double value = children.get(i).getUCB(numVisits, exploreFactor);
+            double value = children.get(i).getUCB(numVisits, exploreFactor,this.getContext().getActivePlayerId());
             if(value > bestValue) {
                 bestNode = children.get(i);
                 bestValue = value;
@@ -153,9 +155,9 @@ public abstract class  MCTSNode {
         return children == null || children.size() == 0;
     }
 
-    public double getUCB(double totalVisits, double exploreFactor)
+    public double getUCB(double totalVisits, double exploreFactor, int activePlayer)
     {
-        return getExploit() + getExplore(totalVisits, exploreFactor) + epsilon * rand.nextDouble();
+        return getExploit(activePlayer) + getExplore(totalVisits, exploreFactor) + epsilon * rand.nextDouble();
     }
 
     public double getExplore(double totalVisits, double exploreFactor)
@@ -163,9 +165,9 @@ public abstract class  MCTSNode {
         return exploreFactor * Math.sqrt(Math.log(totalVisits + epsilon) / numVisits);
     }
 
-    public double getExploit()
+    public double getExploit(int activePlayer)
     {
-        if(context.getActivePlayerId() == 0) {
+        if(activePlayer == 0) {
             return player1Value / (numVisits + epsilon);
         } else {
             return (numVisits - player1Value) / (numVisits + epsilon);
@@ -201,4 +203,52 @@ public abstract class  MCTSNode {
     {
         return context;
     }
+
+    void saveTreeToDot(String gametreetxt, int depth) {
+        String dotFile = "digraph MCTSTree{";
+        int[] refInt = new int[1];
+        dotFile += this.toDot(refInt, 4, this.getContext().getActivePlayerId());
+        dotFile += "}";
+        try {
+            PrintWriter out = new PrintWriter(gametreetxt);
+            out.write(dotFile);
+            out.close();
+        } catch (Exception e) {
+            System.err.println("Something went wrong with DOT:");
+            e.printStackTrace();
+        }
+    }
+    public String toDot(int[] parent, int maxDepth, int parentActivePlayer) {
+
+
+        // if(this.totValue[activePlayer]/this.nVisits > 1.0){
+        //    System.err.println("you done bad");
+        //    System.exit(0);
+        // }
+        double newValue = getValue(parentActivePlayer) / this.getNumVisits();
+        newValue = Math.round(newValue * 1000);
+        newValue /= 1000.0;
+        String contrib = parent[0] + " [label=\"" + this.getNumVisits() + ":" + (newValue) + "\", shape=box];\n";
+        if (children == null) {
+            return contrib;
+        }
+        if (maxDepth == 0) {
+            return contrib;
+        }
+        int origParent = parent[0];
+        for (int i = 0; i < this.children.size(); i++) {
+            MCTSNode child = children.get(i);
+            // do the transition here
+            parent[0] += 1;
+            String action = child.action + "";
+            if (child.action instanceof PlayCardAction) {
+                action = ((PlayCardAction) child.action).getCardReference().getCardName();
+            }
+            contrib += origParent + "->" + parent[0] + " [ label=\"" + action + "\"];\n";
+            contrib += child.toDot(parent, maxDepth - 1, this.context.getActivePlayerId());
+            //do in that order so we don't have to remember the parent variable we passed in
+        }
+        return contrib;
+    }
+
 }

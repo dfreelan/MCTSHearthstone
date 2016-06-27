@@ -10,6 +10,7 @@ public class BehaviorConfig
     
     public int numTrees;
     public int numIterations;
+    public boolean logTrees = false;
     public double exploreFactor;
     
     public Path loadNetworkFile;
