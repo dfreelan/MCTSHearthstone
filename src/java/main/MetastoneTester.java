@@ -303,29 +303,35 @@ public class MetastoneTester
 
     private static Deck loadDeck(String name)
     {
-        String url = null;
         switch (name.toLowerCase()) {
             case "nobattlecryhunter":
-                url = "http://www.hearthpwn.com/decks/577429-midrange-hunter-no-targeted-battlecries";
+                name = "http://www.hearthpwn.com/decks/577429-midrange-hunter-no-targeted-battlecries";
                 break;
             case "controlwarrior":
-                url = "http://www.hearthpwn.com/decks/81605-breebotjr-control-warrior";
+                name = "http://www.hearthpwn.com/decks/81605-breebotjr-control-warrior";
                 break;
             case "dragon":
-                DeckProxy p = new DeckProxy();
-                try{p.loadDecks();}catch(Exception e){System.exit(123);}
-                return  p.getDeckByName("Dragon Warrior");
+                name = "Dragon Warrior";
+                break;
             case "nobattlecryhunteroffline":
-                p = new DeckProxy();
-                try{p.loadDecks();}catch(Exception e){System.exit(123);}
-                return  p.getDeckByName("MidRange Hunter: NO (targeted) BATTLECRIES");
-            default:
-                url = name;
+                name = "MidRange Hunter: NO (targeted) BATTLECRIES";
+                break;
         }
 
-        Deck deck = new HearthPwnImporter().importFrom(url);
-        if(deck == null) {
-            throw new RuntimeException("Error: deck " + name + " doesn't exist or loaded unsuccessfully from hearthpwn.");
+        Deck deck = null;
+        if(name.startsWith("http://www.hearthpwn.com/decks")) {
+            deck = new HearthPwnImporter().importFrom(name);
+            if (deck == null) {
+                throw new RuntimeException("Error: deck " + name + " doesn't exist or loaded unsuccessfully from hearthpwn.");
+            }
+        } else {
+            DeckProxy p = new DeckProxy();
+            try {
+                p.loadDecks();
+            } catch(Exception e) {
+                throw new RuntimeException("Error loading decks");
+            }
+            deck = p.getDeckByName("Dragon Warrior");
         }
 
         return deck;
