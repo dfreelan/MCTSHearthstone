@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 
 import java.util.stream.IntStream;
 
+import behaviors.DummyBehavior;
 import behaviors.MCTSCritic.MCTSNeuralNode;
 import behaviors.critic.NeuralNetworkCritic;
 import behaviors.critic.TrainConfig;
@@ -83,25 +84,35 @@ public class MetastoneTester
         new CardProxy();
         Deck deck1 = loadDeck(behaviorConfig1.deckName);
         Deck deck2 = loadDeck(behaviorConfig2.deckName);
-        IBehaviour behavior1 = new MCTSBehavior(behaviorConfig1, new MCTSStandardNode(new PlayRandomBehaviour()));
-        IBehaviour behavior2 = new PlayRandomBehaviour();
+        IBehaviour behavior1 = new DummyBehavior();
+        IBehaviour behavior2 = new DummyBehavior();
         SimulationContext game = createContext(deck1, deck2, behavior1, behavior2);
 
         if(ArgumentUtils.keyExists("-behavior", args)) {
             String behavior1Arg = ArgumentUtils.argumentForKey("-behavior", args);
             behavior1 = getBehavior(behavior1Arg, behaviorConfig1, game, game.getGameContext().getPlayer1());
             game.getGameContext().getPlayer1().setBehaviour(behavior1);
+        } else {
+            throw new RuntimeException("Error: must specify behavior for player 1");
         }
         if(ArgumentUtils.keyExists("-behavior2", args)) {
             String behavior2Arg = ArgumentUtils.argumentForKey("-behavior2", args);
             behavior2 = getBehavior(behavior2Arg, behaviorConfig2, game, game.getGameContext().getPlayer2());
             game.getGameContext().getPlayer2().setBehaviour(behavior2);
+        } else {
+            throw new RuntimeException("Error: must specify behavior for player 2");
         }
 
         game.getGameContext().getPlayer1().setName(behavior1.getName());
         game.getGameContext().getPlayer2().setName(behavior2.getName());
 
         long beginGamesTime = System.nanoTime();
+
+        System.err.println("Actual p1 behavior: " + game.getGameContext().getPlayer1().getBehaviour().getClass().getName());
+        System.err.println("Actual p2 behavior: " + game.getGameContext().getPlayer2().getBehaviour().getClass().getName());
+        System.err.println("Named p1 behavior: " + game.getGameContext().getPlayer1().getBehaviour().getName());
+        System.err.println("Named p2 behavior: " + game.getGameContext().getPlayer2().getBehaviour().getName());
+
         if(globalConfig.parallel) {
             IntStream.range(0, globalConfig.simulations).parallel().forEach((int i) -> runSimulation(game.clone(), i, globalConfig));
         } else {
@@ -199,7 +210,6 @@ public class MetastoneTester
                 throw new RuntimeException("Error: " + name + " behavior does not exist.");
         }
     }
-
 
     private static MultiLayerConfiguration defaultNetworkConfig(SimulationContext game, Player player)
     {

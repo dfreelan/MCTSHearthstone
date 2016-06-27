@@ -28,13 +28,14 @@ public class RandomStateCollector implements StateCollector
     {
         SimulationContext[] statesArr = new SimulationContext[numStates];
 
-        initialState.setBehavior(new PlayRandomBehaviour());
-        if(parallel) {
-            IntStream.range(0, numStates).parallel().forEach((int i) -> statesArr[i] = collectState(initialState.clone()));
-        } else {
-            IntStream.range(0, numStates).sequential().forEach((int i) -> statesArr[i] = collectState(initialState.clone()));
-        }
+        initialState = initialState.clone();
         initialState.setBehavior(behavior);
+        final SimulationContext initialStateFinal = initialState;
+        if(parallel) {
+            IntStream.range(0, numStates).parallel().forEach((int i) -> statesArr[i] = collectState(initialStateFinal.clone()));
+        } else {
+            IntStream.range(0, numStates).sequential().forEach((int i) -> statesArr[i] = collectState(initialStateFinal.clone()));
+        }
 
         return new ArrayList<>(Arrays.asList(statesArr));
     }
