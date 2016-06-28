@@ -258,7 +258,7 @@ public class MetastoneTester
                         .activation("tanh").weightInit(WeightInit.XAVIER)
                         .nIn(80).nOut(1).build()).backprop(true).pretrain((true))
                 .build();
-        
+
         return networkConfig;
     }
 
