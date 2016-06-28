@@ -70,7 +70,7 @@ public class BehaviorConfig
                 throw new RuntimeException("Error: " + loadNetworkFile.toString() + " does not exist");
             }
         }
-        if(ArgumentUtils.keyExists("-loadnetwork" + playerIndicator, args)) {
+        if(ArgumentUtils.keyExists("-savenetwork" + playerIndicator, args)) {
             saveNetworkFile = Paths.get(ArgumentUtils.argumentForKey("-savenetwork" + playerIndicator, args));
         }
         if(ArgumentUtils.keyExists("-networkconfig" + playerIndicator, args)) {

@@ -10,13 +10,13 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.IntStream;
 
-public class RandomStateCollector implements StateCollector
+public class GameStateCollector implements StateCollector
 {
     private Random rand;
 
     private IBehaviour behavior;
 
-    public RandomStateCollector(IBehaviour behavior)
+    public GameStateCollector(IBehaviour behavior)
     {
         rand = new Random();
         this.behavior = behavior;

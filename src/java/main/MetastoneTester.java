@@ -4,6 +4,7 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import behaviors.MCTSCritic.MCTSMixedNeuralNode;
 import behaviors.simulation.SimulationContext;
 import behaviors.MCTS.MCTSBehavior;
 import behaviors.DummyBehavior;
@@ -18,7 +19,7 @@ import behaviors.util.BehaviorConfig;
 import behaviors.util.FeatureCollector;
 import behaviors.util.GlobalConfig;
 import behaviors.util.Logger;
-import behaviors.util.RandomStateCollector;
+import behaviors.util.GameStateCollector;
 import net.demilich.metastone.game.Player;
 import net.demilich.metastone.game.behaviour.IBehaviour;
 import net.demilich.metastone.game.behaviour.PlayRandomBehaviour;
@@ -178,59 +179,87 @@ public class MetastoneTester
             case "mctsneural":
                 System.err.println("THE gamecontext in the NN is" + game.toString());
 
-                MultiLayerConfiguration networkConfig;
-                if (behaviorConfig.networkConfigFile == null) {
-                    networkConfig = defaultNetworkConfig(game, player);
-                } else {
-                    String fileText = "";
-                    List<String> lines;
-                    try {
-                        lines = Files.readAllLines(behaviorConfig.networkConfigFile);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        throw new RuntimeException("Error reading from " + behaviorConfig.toString());
-                    }
-                    for(String line : lines) {
-                        fileText += line + System.lineSeparator();
-                    }
+                MultiLayerConfiguration networkConfig = getNetworkConfig(game, player, behaviorConfig);
 
-                    networkConfig = MultiLayerConfiguration.fromJson(fileText);
-                }
+                BehaviorConfig defaultJudgeConfig = new BehaviorConfig(player.getId());
+                defaultJudgeConfig.numTrees = 5;
+                defaultJudgeConfig.numIterations = 150;
 
-                MCTSBehavior neural = null;
+                TrainConfig trainConfig = new TrainConfig(10000, game, new GameStateCollector(new PlayRandomBehaviour()),
+                        new MCTSBehavior(defaultJudgeConfig, new MCTSStandardNode(new PlayRandomBehaviour())), true);
+
+                MCTSBehavior neural;
                 if (behaviorConfig.loadNetworkFile == null) {
-                    BehaviorConfig defaultJudgeConfig = new BehaviorConfig(player.getId());
-                    defaultJudgeConfig.numTrees = 4;
-                    defaultJudgeConfig.numIterations = 60;
-                    TrainConfig trainConfig = new TrainConfig(500, game, new RandomStateCollector(new PlayRandomBehaviour()),
-                            new MCTSBehavior(defaultJudgeConfig, new MCTSStandardNode(new PlayRandomBehaviour())), true);
-
                     neural = new MCTSBehavior(behaviorConfig, new MCTSNeuralNode(new NeuralNetworkCritic(networkConfig, trainConfig, behaviorConfig.saveNetworkFile), behaviorConfig.povMode));
                 } else {
                     neural = new MCTSBehavior(behaviorConfig, new MCTSNeuralNode(new NeuralNetworkCritic(behaviorConfig.loadNetworkFile, game), behaviorConfig.povMode));
                 }
-
                 neural.setName("MCTSNeuralBehavior");
                 return neural;
             case "mctsneuralnested":
-                neural = null;
-                networkConfig = defaultNetworkConfig(game, player);
-                BehaviorConfig defaultJudgeConfig = new BehaviorConfig(player.getId());
-                defaultJudgeConfig.numTrees=4;
-                defaultJudgeConfig.numIterations=400;
+                networkConfig = getNetworkConfig(game, player, behaviorConfig);
 
-                TrainConfig trainConfig = new TrainConfig(25000, game, new RandomStateCollector(new PlayRandomBehaviour()),
+                defaultJudgeConfig = new BehaviorConfig(player.getId());
+                defaultJudgeConfig.numTrees = 10;
+                defaultJudgeConfig.numIterations = 1000;
+
+                trainConfig = new TrainConfig(25000, game, new GameStateCollector(new PlayRandomBehaviour()),
                         new MCTSBehavior(defaultJudgeConfig, new MCTSStandardNode(new PlayRandomBehaviour())), true);
 
                 trainConfig.nestAmount = 10;
 
-                neural = new MCTSBehavior(behaviorConfig, new MCTSNeuralNode(new NestedNeuralNetworkCritic(networkConfig, trainConfig, behaviorConfig.saveNetworkFile,defaultJudgeConfig), behaviorConfig.povMode));
-
-
+                if(behaviorConfig.loadNetworkFile == null) {
+                    neural = new MCTSBehavior(behaviorConfig, new MCTSNeuralNode(new NestedNeuralNetworkCritic(networkConfig, trainConfig, behaviorConfig.saveNetworkFile, defaultJudgeConfig), behaviorConfig.povMode));
+                } else {
+                    neural = new MCTSBehavior(behaviorConfig, new MCTSNeuralNode(new NestedNeuralNetworkCritic(behaviorConfig.loadNetworkFile, game), behaviorConfig.povMode));
+                }
                 neural.setName("MCTSNeuralBehavior");
                 return neural;
+            case "mctsneuralmixed":
+                networkConfig = getNetworkConfig(game, player, behaviorConfig);
+
+                defaultJudgeConfig = new BehaviorConfig(player.getId());
+                defaultJudgeConfig.numTrees = 5;
+                defaultJudgeConfig.numIterations = 200;
+
+                trainConfig = new TrainConfig(10000, game, new GameStateCollector(new PlayRandomBehaviour()),
+                        new MCTSBehavior(defaultJudgeConfig, new MCTSStandardNode(new PlayRandomBehaviour())), true);
+
+                MCTSNeuralNode neuralNode;
+                if(behaviorConfig.loadNetworkFile == null) {
+                    neuralNode = new MCTSNeuralNode(new NeuralNetworkCritic(networkConfig, trainConfig, behaviorConfig.saveNetworkFile), behaviorConfig.povMode);
+                } else {
+                    neuralNode = new MCTSNeuralNode(new NeuralNetworkCritic(behaviorConfig.loadNetworkFile, game), behaviorConfig.povMode);
+                }
+
+                MCTSStandardNode standardNode = new MCTSStandardNode(new PlayRandomBehaviour());
+
+                MCTSBehavior mixedNeural = new MCTSBehavior(behaviorConfig, new MCTSMixedNeuralNode(standardNode, neuralNode, 0.5));
+                mixedNeural.setName("MCTSMixedNeuralBehavior");
+                return mixedNeural;
             default:
                 throw new RuntimeException("Error: " + name + " behavior does not exist.");
+        }
+    }
+
+    private static MultiLayerConfiguration getNetworkConfig(SimulationContext game, Player player, BehaviorConfig behaviorConfig)
+    {
+        if (behaviorConfig.networkConfigFile == null) {
+            return defaultNetworkConfig(game, player);
+        } else {
+            String fileText = "";
+            List<String> lines;
+            try {
+                lines = Files.readAllLines(behaviorConfig.networkConfigFile);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new RuntimeException("Error reading from " + behaviorConfig.toString());
+            }
+            for(String line : lines) {
+                fileText += line + System.lineSeparator();
+            }
+
+            return MultiLayerConfiguration.fromJson(fileText);
         }
     }
 
