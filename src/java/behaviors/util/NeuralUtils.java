@@ -9,16 +9,17 @@ import org.nd4j.linalg.factory.Nd4j;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 
 public class NeuralUtils
 {
     public static DataSet getDataSet(List<SimulationContext> states, int statesToUse, FeatureCollector fCollector, StateJudge judge)
     {
-        return getDataSet(states, statesToUse, fCollector, judge, false, null);
+        return getDataSet(states, statesToUse, fCollector, judge, false, null, null);
     }
 
-    public static DataSet getDataSet(List<SimulationContext> states, int statesToUse, FeatureCollector fCollector, StateJudge judge, boolean consoleOutput, Path logFile)
+    public static DataSet getDataSet(List<SimulationContext> states, int statesToUse, FeatureCollector fCollector, StateJudge judge, boolean consoleOutput, Path logFile, Path saveLocation)
     {
         double[][] inputsArr = new double[statesToUse][];
         double[][] labelsArr = new double[statesToUse][];
@@ -32,6 +33,19 @@ public class NeuralUtils
             labelsArr[i][0] = judge.evaluate(state, state.getActivePlayer()) * 2.0 - 1.0;
             if(labelsArr[i][0] < -1.00001 || labelsArr[i][0] > 1.00001){
                 throw new RuntimeException(("Error: invalid label " + labelsArr[i][0]));
+            }
+
+            if(i > 0 && i % 1000 == 0 && saveLocation != null) {
+                INDArray inputs = Nd4j.create(Arrays.copyOfRange(inputsArr, 0, i));
+                INDArray labels = Nd4j.create(Arrays.copyOfRange(labelsArr, 0, i));
+                DataSet samples = new DataSet(inputs, labels);
+                try {
+                    Files.deleteIfExists(saveLocation);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    throw new RuntimeException("Error deleting old sample backup");
+                }
+                samples.save(saveLocation.toFile());
             }
 
             if((i + 1) % 10 == 0) {
