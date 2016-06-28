@@ -18,6 +18,8 @@ public class BehaviorConfig
     public Path loadNetworkFile;
     public Path saveNetworkFile;
     public Path networkConfigFile;
+    public Path trainingSamplesFile;
+    public Path testingSamplesFile;
     public POVMode povMode;
     
     public String deckName;
@@ -37,6 +39,8 @@ public class BehaviorConfig
         loadNetworkFile = null;
         saveNetworkFile = Paths.get("neural_network.dat");
         networkConfigFile = null;
+        trainingSamplesFile = null;
+        testingSamplesFile = null;
         povMode = POVMode.SELF;
         
         deckName = "nobattlecryhunter";
@@ -52,13 +56,13 @@ public class BehaviorConfig
         if(ArgumentUtils.keyExists("-trees" + playerIndicator, args)) {
             numTrees = Integer.parseInt(ArgumentUtils.argumentForKey("-trees" + playerIndicator, args));
             if(numTrees < 1) {
-                throw new RuntimeException("Error: there must be at least one tree.");
+                throw new RuntimeException("Error: there must be at least one tree");
             }
         }
         if(ArgumentUtils.keyExists("-iterations" + playerIndicator, args)) {
             numIterations = Integer.parseInt(ArgumentUtils.argumentForKey("-iterations" + playerIndicator, args));
             if(numIterations < 1) {
-                throw new RuntimeException("Error: there must be at least one iteration.");
+                throw new RuntimeException("Error: there must be at least one iteration");
             }
         }
         if(ArgumentUtils.keyExists("-explore" + playerIndicator, args)) {
@@ -79,6 +83,22 @@ public class BehaviorConfig
                 throw new RuntimeException("Error: " + networkConfigFile.toString() + " does not exist");
             } else if(!networkConfigFile.toString().endsWith(".json")) {
                 throw new RuntimeException("Error: network config must be a .json file");
+            }
+        }
+        if(ArgumentUtils.keyExists("-trainingsamples" + playerIndicator, args)) {
+            trainingSamplesFile = Paths.get(ArgumentUtils.argumentForKey("-trainingsamples" + playerIndicator, args));
+            if(!Files.exists(trainingSamplesFile)) {
+                throw new RuntimeException("Error: " + trainingSamplesFile.toString() + " does not exist");
+            } else if(!ArgumentUtils.keyExists("-testingsamples" + playerIndicator, args)) {
+                throw new RuntimeException("Error: since a training samples file is specified, a testing samples file must also be specified");
+            }
+        }
+        if(ArgumentUtils.keyExists("-testingsamples" + playerIndicator, args)) {
+            testingSamplesFile = Paths.get(ArgumentUtils.argumentForKey("-testingsamples" + playerIndicator, args));
+            if(!Files.exists(testingSamplesFile)) {
+                throw new RuntimeException("Error: " + testingSamplesFile.toString() + " does not exist");
+            } else if(trainingSamplesFile == null) {
+                throw new RuntimeException("Error: since a testing samples file is specified, a training samples file must also be specified");
             }
         }
         if(ArgumentUtils.keyExists("-povmode" + playerIndicator, args)) {
@@ -116,8 +136,9 @@ public class BehaviorConfig
         other.exploreFactor = exploreFactor;
     
         other.loadNetworkFile = loadNetworkFile;
-        other.saveNetworkFile = saveNetworkFile;
         other.networkConfigFile = networkConfigFile;
+        other.trainingSamplesFile = trainingSamplesFile;
+        other.testingSamplesFile = testingSamplesFile;
         other.povMode = povMode;
     
         other.deckName = deckName;

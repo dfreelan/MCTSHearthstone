@@ -5,6 +5,7 @@ import behaviors.MCTSCritic.MCTSNeuralNode;
 import behaviors.simulation.SimulationContext;
 import behaviors.util.BehaviorConfig;
 import behaviors.util.FeatureCollector;
+import behaviors.util.NeuralUtils;
 import behaviors.util.StateJudge;
 import net.demilich.metastone.game.GameContext;
 import net.demilich.metastone.game.Player;
@@ -33,7 +34,7 @@ public class NestedNeuralNetworkCritic implements Critic
     public NestedNeuralNetworkCritic(Path loadLocation, SimulationContext initialState)
     {
         fCollector = new FeatureCollector(initialState.getGameContext(), initialState.getGameContext().getPlayer1());
-        network = loadNetwork(loadLocation);
+        network = NeuralUtils.loadNetwork(loadLocation);
     }
 
     private NestedNeuralNetworkCritic(MultiLayerNetwork network, FeatureCollector fCollector)
@@ -70,14 +71,14 @@ public class NestedNeuralNetworkCritic implements Critic
         MultiLayerNetwork currentNetwork = network;
         for(int i = 0; i < trainConfig.nestAmount+1; i++) {
             states = trainConfig.collector.collectStates(trainConfig.numStates, trainConfig.initialState, trainConfig.parallel);
-            DataSet trainingData = getDataSet(states, trainingStates, fCollector, trainConfig.judge);
+            DataSet trainingData = NeuralUtils.getDataSet(states, trainingStates, fCollector, trainConfig.judge);
             network.fit(trainingData);
 
             System.err.println("NEST Iteration: " + i);
-            System.err.println("Training Error: " + meanSqError(trainingData.getFeatures(), trainingData.getLabels()));
-            DataSet testingData = getDataSet(states, testingStates, fCollector, trainConfig.judge);
-            System.err.println("Testing Error: " + meanSqError(testingData.getFeatures(), testingData.getLabels()));
-            System.err.println("Error if always 0: " + getErrorIfZero(trainingData.getLabels()));
+            System.err.println("Training Error: " + NeuralUtils.meanSqError(network, trainingData.getFeatures(), trainingData.getLabels()));
+            DataSet testingData = NeuralUtils.getDataSet(states, testingStates, fCollector, trainConfig.judge);
+            System.err.println("Testing Error: " + NeuralUtils.meanSqError(network, testingData.getFeatures(), testingData.getLabels()));
+            System.err.println("Error if always 0: " + NeuralUtils.getErrorIfZero(trainingData.getLabels()));
 
             currentNetwork = network;
             network = new MultiLayerNetwork(networkConfig);
@@ -86,51 +87,54 @@ public class NestedNeuralNetworkCritic implements Critic
         }
 
         network = currentNetwork;
-        saveNetwork(network, saveLocation);
+        NeuralUtils.saveNetwork(network, saveLocation);
     }
 
-    private DataSet getDataSet(List<SimulationContext> states, int statesToUse, FeatureCollector fCollector, StateJudge judge)
+    public NestedNeuralNetworkCritic(MultiLayerConfiguration networkConfig, TrainConfig trainConfig, BehaviorConfig saveAndSampleFiles, BehaviorConfig nestedConfig)
     {
-        double[][] inputsArr = new double[statesToUse][];
-        double[][] labelsArr = new double[statesToUse][];
+        network = new MultiLayerNetwork(networkConfig);
+        network.init();
 
-        for(int i = 0; i < statesToUse; i++) {
-            SimulationContext state = states.remove(states.size() - 1);
+        GameContext context = trainConfig.initialState.getGameContext();
+        fCollector = new FeatureCollector(context, context.getPlayer1());
 
-            inputsArr[i] = fCollector.getFeatures(true, state.getGameContext(), state.getActivePlayer());
-
-            labelsArr[i] = new double[1];
-            labelsArr[i][0] = judge.evaluate(state, state.getActivePlayer()) * 2.0 - 1.0;
-            if(labelsArr[i][0] < -1.00001 || labelsArr[i][0] > 1.00001){
-                throw new RuntimeException(("Error: invalid label " + labelsArr[i][0]));
+        Path trainingLogFile = Paths.get(trainingLogFileLocation);
+        if(Files.exists(trainingLogFile)) {
+            try {
+                Files.delete(trainingLogFile);
+            } catch(Exception e) {
+                e.printStackTrace();
+                throw new RuntimeException("Error deleting old log file " + trainingLogFileLocation);
             }
         }
 
-        INDArray inputs = Nd4j.create(inputsArr);
-        INDArray labels = Nd4j.create(labelsArr);
-        return new DataSet(inputs, labels);
-    }
+        DataSet trainingData = new DataSet();
+        DataSet testingData = new DataSet();
+        trainingData.load(saveAndSampleFiles.trainingSamplesFile.toFile());
+        testingData.load(saveAndSampleFiles.testingSamplesFile.toFile());
 
-    private double meanSqError(INDArray inputs, INDArray labels)
-    {
-        double totalSqError = 0;
-        for(int i = 0; i < labels.length(); i++) {
-            INDArray input = inputs.getRow(i);
-            double output = network.output(input, false).getDouble(0);
+        network.setListeners(new TrainingIterationListener(1, true, trainingLogFile));
+        MultiLayerNetwork currentNetwork = network;
+        for(int i = 0; i < trainConfig.nestAmount + 1; i++) {
+            network.fit(trainingData);
 
-            double error = labels.getDouble(i) - output;
-            totalSqError += error * error;
+            System.err.println("NEST Iteration: " + i);
+            System.err.println("Training Error: " + NeuralUtils.meanSqError(network, trainingData.getFeatures(), trainingData.getLabels()));
+            System.err.println("Testing Error: " + NeuralUtils.meanSqError(network, testingData.getFeatures(), testingData.getLabels()));
+            System.err.println("Error if always 0: " + NeuralUtils.getErrorIfZero(trainingData.getLabels()));
+
+            currentNetwork = network;
+            network = new MultiLayerNetwork(networkConfig);
+
+            if(i < trainConfig.nestAmount + 1) {
+                trainConfig.judge = new MCTSBehavior(nestedConfig, new MCTSNeuralNode(new NestedNeuralNetworkCritic(currentNetwork, fCollector), nestedConfig.povMode));
+                List<SimulationContext> states = trainConfig.collector.collectStates(trainConfig.numStates, trainConfig.initialState);
+                trainingData = NeuralUtils.getDataSet(states, (int) (trainConfig.numStates * 0.9), fCollector, trainConfig.judge);
+                testingData = NeuralUtils.getDataSet(states, (int) (trainConfig.numStates * 0.1), fCollector, trainConfig.judge);
+            }
         }
-        return totalSqError / labels.length();
-    }
-
-    private double getErrorIfZero(INDArray labels)
-    {
-        double sumErr = 0.0;
-        for(int i = 0; i < labels.length(); i++){
-            sumErr += (0 - labels.getDouble(i)) * (0 - labels.getDouble(i));
-        }
-        return sumErr / labels.length();
+        network = currentNetwork;
+        NeuralUtils.saveNetwork(network, saveAndSampleFiles.saveNetworkFile);
     }
 
     @Override

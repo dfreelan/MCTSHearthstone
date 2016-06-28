@@ -20,6 +20,7 @@ import behaviors.util.FeatureCollector;
 import behaviors.util.GlobalConfig;
 import behaviors.util.Logger;
 import behaviors.util.GameStateCollector;
+import behaviors.util.MetastoneUtils;
 import net.demilich.metastone.game.Player;
 import net.demilich.metastone.game.behaviour.IBehaviour;
 import net.demilich.metastone.game.behaviour.PlayRandomBehaviour;
@@ -70,21 +71,21 @@ public class MetastoneTester
 
         behaviorConfig2.applyArguments(args);
 
-        if(globalConfig.logFile != null && Files.exists(globalConfig.logFile)) {
+        if (globalConfig.logFile != null && Files.exists(globalConfig.logFile)) {
             try {
                 Files.delete(globalConfig.logFile);
-            } catch(Exception e) {
+            } catch (Exception e) {
                 e.printStackTrace();
                 throw new RuntimeException("Error deleting old log file " + globalConfig.logFile.toString());
             }
         }
 
         new CardProxy();
-        Deck deck1 = loadDeck(behaviorConfig1.deckName);
-        Deck deck2 = loadDeck(behaviorConfig2.deckName);
+        Deck deck1 = MetastoneUtils.loadDeck(behaviorConfig1.deckName);
+        Deck deck2 = MetastoneUtils.loadDeck(behaviorConfig2.deckName);
         IBehaviour behavior1 = new DummyBehavior();
         IBehaviour behavior2 = new DummyBehavior();
-        SimulationContext game = createContext(deck1, deck2, behavior1, behavior2);
+        SimulationContext game = MetastoneUtils.createContext(deck1, deck2, behavior1, behavior2);
 
         if(ArgumentUtils.keyExists("-behavior", args)) {
             String behavior1Arg = ArgumentUtils.argumentForKey("-behavior", args);
@@ -189,10 +190,12 @@ public class MetastoneTester
                         new MCTSBehavior(defaultJudgeConfig, new MCTSStandardNode(new PlayRandomBehaviour())), true);
 
                 MCTSBehavior neural;
-                if (behaviorConfig.loadNetworkFile == null) {
-                    neural = new MCTSBehavior(behaviorConfig, new MCTSNeuralNode(new NeuralNetworkCritic(networkConfig, trainConfig, behaviorConfig.saveNetworkFile), behaviorConfig.povMode));
-                } else {
+                if (behaviorConfig.loadNetworkFile != null) {
                     neural = new MCTSBehavior(behaviorConfig, new MCTSNeuralNode(new NeuralNetworkCritic(behaviorConfig.loadNetworkFile, game), behaviorConfig.povMode));
+                } else if (behaviorConfig.trainingSamplesFile != null){
+                    neural = new MCTSBehavior(behaviorConfig, new MCTSNeuralNode(new NeuralNetworkCritic(networkConfig, trainConfig, behaviorConfig), behaviorConfig.povMode));
+                } else {
+                    neural = new MCTSBehavior(behaviorConfig, new MCTSNeuralNode(new NeuralNetworkCritic(networkConfig, trainConfig, behaviorConfig.saveNetworkFile), behaviorConfig.povMode));
                 }
                 neural.setName("MCTSNeuralBehavior");
                 return neural;
@@ -208,10 +211,12 @@ public class MetastoneTester
 
                 trainConfig.nestAmount = 10;
 
-                if(behaviorConfig.loadNetworkFile == null) {
-                    neural = new MCTSBehavior(behaviorConfig, new MCTSNeuralNode(new NestedNeuralNetworkCritic(networkConfig, trainConfig, behaviorConfig.saveNetworkFile, defaultJudgeConfig), behaviorConfig.povMode));
-                } else {
+                if(behaviorConfig.loadNetworkFile != null) {
                     neural = new MCTSBehavior(behaviorConfig, new MCTSNeuralNode(new NestedNeuralNetworkCritic(behaviorConfig.loadNetworkFile, game), behaviorConfig.povMode));
+                } else if (behaviorConfig.trainingSamplesFile != null) {
+                    neural = new MCTSBehavior(behaviorConfig, new MCTSNeuralNode(new NestedNeuralNetworkCritic(networkConfig, trainConfig, behaviorConfig, defaultJudgeConfig), behaviorConfig.povMode));
+                } else {
+                    neural = new MCTSBehavior(behaviorConfig, new MCTSNeuralNode(new NestedNeuralNetworkCritic(networkConfig, trainConfig, behaviorConfig.saveNetworkFile, defaultJudgeConfig), behaviorConfig.povMode));
                 }
                 neural.setName("MCTSNeuralBehavior");
                 return neural;
@@ -226,10 +231,12 @@ public class MetastoneTester
                         new MCTSBehavior(defaultJudgeConfig, new MCTSStandardNode(new PlayRandomBehaviour())), true);
 
                 MCTSNeuralNode neuralNode;
-                if(behaviorConfig.loadNetworkFile == null) {
-                    neuralNode = new MCTSNeuralNode(new NeuralNetworkCritic(networkConfig, trainConfig, behaviorConfig.saveNetworkFile), behaviorConfig.povMode);
-                } else {
+                if (behaviorConfig.loadNetworkFile != null) {
                     neuralNode = new MCTSNeuralNode(new NeuralNetworkCritic(behaviorConfig.loadNetworkFile, game), behaviorConfig.povMode);
+                } else if (behaviorConfig.trainingSamplesFile != null){
+                    neuralNode = new MCTSNeuralNode(new NeuralNetworkCritic(networkConfig, trainConfig, behaviorConfig), behaviorConfig.povMode);
+                } else {
+                    neuralNode = new MCTSNeuralNode(new NeuralNetworkCritic(networkConfig, trainConfig, behaviorConfig.saveNetworkFile), behaviorConfig.povMode);
                 }
 
                 MCTSStandardNode standardNode = new MCTSStandardNode(new PlayRandomBehaviour());
@@ -289,73 +296,5 @@ public class MetastoneTester
                 .build();
 
         return networkConfig;
-    }
-
-    private static SimulationContext createContext(Deck deck1, Deck deck2, IBehaviour behavior1, IBehaviour behavior2)
-    {
-        DeckProxy dp = new DeckProxy();
-        try {
-            dp.loadDecks();
-        } catch(Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Error loading decks");
-        }
-
-        new DeckFormatProxy();
-
-        PlayerConfig p1Config = new PlayerConfig(deck1, behavior1);
-        PlayerConfig p2Config = new PlayerConfig(deck2, behavior2);
-
-        p1Config.build();
-        p2Config.build();
-
-        p1Config.setHeroCard(MetaHero.getHeroCard(deck1.getHeroClass()));
-        p2Config.setHeroCard(MetaHero.getHeroCard(deck2.getHeroClass()));
-
-        Player p1 = new Player(p1Config);
-        Player p2 = new Player(p2Config);
-
-        DeckFormat allCards = new DeckFormat();
-        for(CardSet set : CardSet.values()) {
-            allCards.addSet(set);
-        }
-
-        return new SimulationContext(p1, p2, new GameLogic(), allCards);
-    }
-
-    private static Deck loadDeck(String name)
-    {
-        switch (name.toLowerCase()) {
-            case "nobattlecryhunter":
-                name = "http://www.hearthpwn.com/decks/577429-midrange-hunter-no-targeted-battlecries";
-                break;
-            case "controlwarrior":
-                name = "http://www.hearthpwn.com/decks/81605-breebotjr-control-warrior";
-                break;
-            case "dragon":
-                name = "Dragon Warrior";
-                break;
-            case "nobattlecryhunteroffline":
-                name = "MidRange Hunter: NO (targeted) BATTLECRIES";
-                break;
-        }
-
-        Deck deck = null;
-        if(name.startsWith("http://www.hearthpwn.com/decks")) {
-            deck = new HearthPwnImporter().importFrom(name);
-            if (deck == null) {
-                throw new RuntimeException("Error: deck " + name + " doesn't exist or loaded unsuccessfully from hearthpwn.");
-            }
-        } else {
-            DeckProxy p = new DeckProxy();
-            try {
-                p.loadDecks();
-            } catch(Exception e) {
-                throw new RuntimeException("Error loading decks");
-            }
-            deck = p.getDeckByName(name);
-        }
-
-        return deck;
     }
 }
