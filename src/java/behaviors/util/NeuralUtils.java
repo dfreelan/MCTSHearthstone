@@ -48,7 +48,7 @@ public class NeuralUtils
                 samples.save(saveLocation.toFile());
             }
 
-            if((i + 1) % 10 == 0) {
+            if((i + 1) % 50 == 0) {
                 Logger.log((i + 1) + "/" + statesToUse + " states labeled", consoleOutput, logFile);
             }
         }
